@@ -166,7 +166,7 @@ const COLLECTIONS: Record<string, CollectionEditorProps> = {
       { name: 'tags', label: 'Tags', type: 'tags', wide: true },
     ],
     itemTitle: (i: Item) => String(i.title),
-    itemMeta: (i: Item) => `${i.published ? 'Published · visible on site' : 'Draft · hidden from site'} · /blog/${i.slug}`,
+    itemMeta: (i: Item) => `${i.published ? 'Published · visible on site' : i.archivedAt ? 'Archived · retained here' : 'Draft · hidden from site'} · /blog/${i.slug}`,
   },
 };
 

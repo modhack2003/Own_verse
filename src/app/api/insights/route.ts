@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { insightState, syncInsights } from '@/lib/security-insights';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
-const settings = z.object({ enabled: z.boolean().optional(), autoPublish: z.boolean().optional() }).strict();
+const settings = z.object({ enabled: z.boolean().optional() }).strict();
 function publicState(state: Awaited<ReturnType<typeof insightState>>) {
   const { enabled, autoPublish, lastSuccess, lastAttempt, lastError, lastCreated, backfilledAt, lockedUntil } = state;
   return { enabled, autoPublish, lastSuccess, lastAttempt, lastError, lastCreated, backfilledAt, running: !!lockedUntil && lockedUntil > new Date() };
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return jsonError('Invalid import request.', 400);
   try {
     const result = await syncInsights(prisma, parsed.data);
-    if (result.created) revalidatePublic();
+    if (result.created || result.published || result.archived) revalidatePublic();
     return NextResponse.json(result);
   } catch (error) { console.error('Security Insights import failed:', error); return jsonError('Import failed. Retry later.', 503); }
 }

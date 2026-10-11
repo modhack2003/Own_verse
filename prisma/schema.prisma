@@ -127,6 +127,7 @@ model BlogPost {
   tags        String[]
   published   Boolean   @default(false)
   publishedAt DateTime?
+  archivedAt  DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -252,7 +253,8 @@ model GitHubSyncState {
 model InsightSyncState {
   id           String @id @map("_id")
   enabled      Boolean @default(true)
-  autoPublish  Boolean @default(false)
+  autoPublish  Boolean @default(true)
+  publishingMigratedAt DateTime?
   lastSuccess  DateTime?
   lastAttempt  DateTime?
   lastError    String?

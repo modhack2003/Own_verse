@@ -5,6 +5,7 @@ import { z } from 'zod';
 export const KEV_URL = 'https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json';
 export const KEV_PAGE = 'https://www.cisa.gov/known-exploited-vulnerabilities-catalog';
 const DAY = 86400000;
+export const BLOG_RETENTION_DAYS = 90;
 const entrySchema = z.object({
   cveID: z.string().regex(/^CVE-\d{4}-\d{4,}$/),
   vendorProject: z.string().min(1).max(200), product: z.string().min(1).max(200),
@@ -64,8 +65,8 @@ export async function fetchCatalog(): Promise<KevEntry[]> {
 }
 export async function insightState(db: PrismaClient) {
   try {
-    return await db.insightSyncState.upsert({ where: { id: 'security-insights' }, update: {}, create: {
-      id: 'security-insights', enabled: true, autoPublish: false, lastSuccess: null, lastAttempt: null,
+    return await db.insightSyncState.upsert({ where: { id: 'security-insights' }, update: { autoPublish: true }, create: {
+      id: 'security-insights', enabled: true, autoPublish: true, lastSuccess: null, lastAttempt: null,
       lastError: null, lockedUntil: null, lockToken: null, backfilledAt: null, lastCreated: 0,
     } });
   } catch (e) {
@@ -83,9 +84,29 @@ export async function syncInsights(db: PrismaClient, options: { automatic?: bool
       ...(options.automatic ? [{ OR: [{ lastAttempt: null }, { lastAttempt: { lte: new Date(now.getTime() - 20 * 60 * 1000) } }] }] : []),
     ],
   }, data: { lockToken, lockedUntil: new Date(now.getTime() + 10 * 60 * 1000), lastAttempt: now } });
-  if (!claim.count) return { skipped: true, created: 0, backfill };
+  if (!claim.count) return { skipped: true, created: 0, published: 0, archived: 0, backfill };
   let created = 0;
+  let published = 0;
+  let archived = 0;
   try {
+    const cutoff = new Date(now.getTime() - BLOG_RETENTION_DAYS * DAY);
+    const unarchived = { OR: [{ archivedAt: null }, { archivedAt: { isSet: false } }] };
+    // Reversible archive: retain the content, dates and durable import ledger.
+    archived = (await db.blogPost.updateMany({ where: {
+      AND: [unarchived, { OR: [
+        { publishedAt: { lt: cutoff, not: null } },
+        { AND: [{ OR: [{ publishedAt: null }, { publishedAt: { isSet: false } }] }, { createdAt: { lt: cutoff } }] },
+      ] }],
+    }, data: { published: false, archivedAt: now } })).count;
+    // One-time release of drafts left by the old approval policy. Subsequent
+    // syncs preserve an editor's decision to unpublish an existing brief.
+    if (!state.publishingMigratedAt) {
+      const recentImports = await db.insightImport.findMany({ where: { sourceDate: { gte: cutoff } }, select: { postSlug: true } });
+      published = (await db.blogPost.updateMany({ where: {
+        slug: { in: recentImports.map(i => i.postSlug) }, published: false, ...unarchived,
+      }, data: { published: true, publishedAt: now } })).count;
+      await db.insightSyncState.updateMany({ where: { id: state.id, lockToken }, data: { publishingMigratedAt: now } });
+    }
     const dailyCount = backfill ? 0 : await db.insightImport.count({ where: { backfill: false, importedAt: { gte: new Date(now.toISOString().slice(0, 10)) } } });
     const budget = backfill ? 8 : Math.max(0, 3 - dailyCount);
     const entries = budget ? selectEntries(await fetchCatalog(), now, backfill) : [];
@@ -103,7 +124,7 @@ export async function syncInsights(db: PrismaClient, options: { automatic?: bool
       if (!legacy) {
         // Empty update preserves all editorial changes after a crash/retry.
         await db.blogPost.upsert({ where: { slug: post.slug }, update: {}, create: {
-          ...post, published: !backfill && state.autoPublish, publishedAt: !backfill && state.autoPublish ? now : null,
+          ...post, published: true, publishedAt: now,
         } });
         created++;
       }
@@ -113,7 +134,7 @@ export async function syncInsights(db: PrismaClient, options: { automatic?: bool
     await db.insightSyncState.updateMany({ where: { id: state.id, lockToken }, data: {
       lastSuccess: new Date(), lastError: null, lastCreated: created, ...(backfill ? { backfilledAt: now } : {}),
     } });
-    return { skipped: false, created, backfill };
+    return { skipped: false, created, published, archived, backfill };
   } catch (error) {
     await db.insightSyncState.updateMany({ where: { id: state.id, lockToken }, data: { lastError: 'Import failed. Retry Sync now or check server logs.', lastCreated: created } }).catch(() => {});
     throw error;

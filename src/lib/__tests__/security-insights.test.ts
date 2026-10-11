@@ -8,7 +8,7 @@ const feed = (entries: KevEntry[]) => { global.fetch = jest.fn().mockResolvedVal
 function database({ backfilled = true, publish = false } = {}) {
   const posts = new Map<string, { slug: string; content: string; title: string; published: boolean }>();
   const imports = new Map<string, { id: string }>();
-  const state = { id: 'security-insights', enabled: true, autoPublish: publish, backfilledAt: backfilled ? now : null };
+  const state = { id: 'security-insights', enabled: true, autoPublish: publish, backfilledAt: backfilled ? now : null, publishingMigratedAt: now };
   const db = {
     insightSyncState: { upsert: jest.fn().mockResolvedValue(state), updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
     insightImport: {
@@ -17,10 +17,11 @@ function database({ backfilled = true, publish = false } = {}) {
     },
     blogPost: {
       findMany: jest.fn(async () => [...posts.values()]),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       upsert: jest.fn(async ({ create }) => { if (!posts.has(create.slug)) posts.set(create.slug, create); return posts.get(create.slug); }),
     },
   };
-  return { db, posts, imports, client: db as unknown as PrismaClient };
+  return { db, posts, imports, state, client: db as unknown as PrismaClient };
 }
 beforeEach(() => { jest.useFakeTimers().setSystemTime(now); });
 afterEach(() => { global.fetch = originalFetch; jest.useRealTimers(); });
@@ -41,24 +42,24 @@ test('template removes markup, retains dates and explains uncertainty', () => {
   expect(post.content).toContain('unknown');
   expect(post.content).toContain('Automated security brief');
 });
-test('daily imports create at most three drafts and retries preserve edits', async () => {
+test('daily imports publish at most three briefs without approval and retries preserve edits', async () => {
   const { client, db, posts } = database(); feed(Array.from({ length: 6 }, (_, i) => entry(i)));
   expect((await syncInsights(client)).created).toBe(3);
-  for (const post of posts.values()) expect(post.published).toBe(false);
+  for (const post of posts.values()) expect(post.published).toBe(true);
   const edited = [...posts.values()][0]; edited.title = 'My edited title';
   db.insightImport.count.mockResolvedValue(3);
   expect((await syncInsights(client)).created).toBe(0);
   expect(posts.get(edited.slug)?.title).toBe('My edited title');
 });
-test('first run backfills eight drafts even with auto-publish enabled', async () => {
+test('first run publishes eight backfill briefs without approval', async () => {
   const { client, posts, db } = database({ backfilled: false, publish: true });
   feed(Array.from({ length: 12 }, (_, i) => entry(i)));
   expect((await syncInsights(client, { automatic: true })).created).toBe(8);
-  for (const post of posts.values()) expect(post.published).toBe(false);
+  for (const post of posts.values()) expect(post.published).toBe(true);
   expect(db.insightSyncState.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ backfilledAt: now }) }));
 });
-test('opt-in publishes only new daily briefs', async () => {
-  const { client, posts } = database({ publish: true }); feed([entry()]);
+test('stored opt-out no longer blocks automatic publishing', async () => {
+  const { client, posts } = database({ publish: false }); feed([entry()]);
   await syncInsights(client); expect([...posts.values()][0].published).toBe(true);
 });
 test('existing manual coverage and deleted imported posts are not recreated', async () => {
@@ -80,4 +81,19 @@ test('failure records an error and releases the shared lease', async () => {
   await expect(syncInsights(client)).rejects.toThrow('Feed offline');
   expect(db.insightSyncState.updateMany).toHaveBeenLastCalledWith(expect.objectContaining({ data: { lockedUntil: null, lockToken: null } }));
   expect(db.insightSyncState.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ lastError: expect.any(String) }) }));
+});
+
+test('old posts are archived reversibly and recent imported drafts migrate only once', async () => {
+  const { client, db, state } = database();
+  state.publishingMigratedAt = null as never;
+  db.blogPost.updateMany.mockResolvedValueOnce({ count: 2 }).mockResolvedValueOnce({ count: 4 });
+  db.insightImport.findMany.mockResolvedValueOnce([{ postSlug: 'security-insight-cve-2026-10001' }] as never);
+  db.insightImport.count.mockResolvedValue(3);
+  const result = await syncInsights(client);
+  expect(result).toMatchObject({ created: 0, published: 4, archived: 2 });
+  const archive = db.blogPost.updateMany.mock.calls[0][0];
+  expect(archive.data).toEqual({ published: false, archivedAt: now });
+  expect(archive.where.AND[1].OR[0].publishedAt.lt).toEqual(new Date('2026-07-10T07:00:00Z'));
+  expect(db.blogPost.updateMany.mock.calls[1][0].where.slug.in).toEqual(['security-insight-cve-2026-10001']);
+  expect(db.insightSyncState.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { publishingMigratedAt: now } }));
 });

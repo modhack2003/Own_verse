@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!secret || actual.length !== expected.length || !timingSafeEqual(actual, expected)) return jsonError('Unauthorized', 401);
   try {
     const result = await syncInsights(prisma, { automatic: true });
-    if (result.created) revalidatePublic();
+    if (result.created || result.published || result.archived) revalidatePublic();
     return NextResponse.json({ success: true, ...result });
   } catch (error) { console.error('Scheduled Security Insights failed:', error); return jsonError('Security Insights sync failed.', 503); }
 }
