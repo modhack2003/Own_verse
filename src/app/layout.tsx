@@ -3,6 +3,7 @@ import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { getFooterData } from "@/lib/portfolio-data";
 import { ExperienceGate } from "@/components/cyber/experience-gate";
+import { SiteAudio } from '@/components/cyber/site-audio';
 import { CyberCursor } from "@/components/cyber/cyber-cursor";
 
 const SITE_TITLE = 'Bikram Dey | Hack. Secure. Defend.';
@@ -68,6 +69,7 @@ export default async function RootLayout({
       <body className="font-body antialiased">
         <ExperienceGate />
         <CyberCursor />
+        <SiteAudio />
         {/* CRT overlays (scanlines + grain) */}
         <div aria-hidden className="pointer-events-none fixed inset-0 z-[70] scanline opacity-[0.35] mix-blend-multiply" />
         <div aria-hidden className="pointer-events-none fixed inset-0 z-[70] noise opacity-[0.05]" />

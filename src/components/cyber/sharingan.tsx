@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { sharinganSound } from '@/lib/site-audio-library';
 import * as THREE from 'three';
 import { EXPERIENCE_EVENT, getExperienceMode, type ExperienceMode } from './experience-gate';
 
@@ -410,6 +411,7 @@ export function SharinganEye({ className }: { className?: string }) {
     let burst = 0;
     let mangeUntil = 0;
     const onActivate = () => {
+      if (performance.now() >= mangeUntil) sharinganSound('mangekyo');
       burst = 1;
       mangeUntil = performance.now() + 3500;
     };
@@ -428,6 +430,7 @@ export function SharinganEye({ className }: { className?: string }) {
     let nextBlink = performance.now() + 2500;
     let blinkStart = -1;
     let nextIdleBurst = performance.now() + 9000;
+    let wasMangekyo = false;
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -450,6 +453,8 @@ export function SharinganEye({ className }: { className?: string }) {
       const pupilTarget = 0.2 - burst * 0.06 + Math.min(scroll, 1) * 0.05;
       eyeUniforms.uPupil.value += (pupilTarget - eyeUniforms.uPupil.value) * 0.12;
       const mangeTarget = now < mangeUntil ? 1 : 0;
+      if (!mangeTarget && wasMangekyo) sharinganSound('sharingan');
+      wasMangekyo = !!mangeTarget;
       eyeUniforms.uMange.value += (mangeTarget - eyeUniforms.uMange.value) * 0.08;
 
       // blink

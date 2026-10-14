@@ -1,0 +1,28 @@
+NARUTO AUDIO REFERENCES
+
+Background music:
+Awaiting the owner's original Naruto theme file: naruto-theme.mp3.
+No replacement instrumental is included.
+
+Short original-series sound references located on Myinstants:
+sharingan.mp3
+  https://www.myinstants.com/en/instant/sharingan-begin-9776/
+  Original download: /media/sounds/sharingan_sound_only.mp3
+mangekyo.mp3
+  https://www.myinstants.com/en/instant/mangekyo-sharingan/
+  Original download: /media/sounds/mangekyoshi-sharingan.mp3
+believe-it.mp3
+  https://www.myinstants.com/en/instant/naruto-believe-it-70931/
+  Original download: /media/sounds/naruto-believe-it_CFOLfj9.mp3
+dattebayo.mp3
+  https://www.myinstants.com/en/instant/dattebayo-naruto-6237/
+  Original download: /media/sounds/d-a-t-t-e-b-a-y-o-meme-audiotrimmer.mp3
+wake-up.mp3
+  https://www.myinstants.com/en/instant/madara-wake-up-to-reality-37572/
+  Original download: /media/sounds/madara-wake-up-to-reality.mp3
+
+Retrieved 2026-10-14. Character references are brief excerpts, not full speeches.
+Files were trimmed where necessary, volume-normalized and encoded as MP3.
+No synthetic speech or character-voice cloning is used.
+Naruto and the original recordings belong to their respective rights holders.
+Soundboard availability is not a grant of a Creative Commons license.
