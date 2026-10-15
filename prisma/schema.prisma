@@ -272,3 +272,15 @@ model InsightImport {
   importedAt DateTime @default(now())
   backfill   Boolean @default(false)
 }
+
+/// Shared site-wide playback settings; public visitors can only mute their theme.
+model SiteAudioConfig {
+  id                 String @id @map("_id")
+  music              Float @default(0.75)
+  dialogue           Float @default(1)
+  effects            Float @default(0.95)
+  randomDialogue     Boolean @default(true)
+  intervalSeconds    Int @default(20)
+  fadeSeconds        Float @default(4)
+  enabledDialogueIds String[]
+}

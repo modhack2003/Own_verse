@@ -8,7 +8,7 @@ const sources: Array<{
   connect: jest.Mock; disconnect: jest.Mock; start: jest.Mock; stop: jest.Mock;
   onended: (() => void) | null;
 }> = [];
-const gains: Array<{ gain: { value: number; setTargetAtTime: jest.Mock }; connect: jest.Mock }> = [];
+const gains: Array<{ gain: { value: number; setTargetAtTime: jest.Mock; setValueAtTime: jest.Mock; cancelScheduledValues: jest.Mock; linearRampToValueAtTime: jest.Mock }; connect: jest.Mock }> = [];
 const resume = jest.fn().mockResolvedValue(undefined);
 const suspend = jest.fn().mockResolvedValue(undefined);
 const close = jest.fn().mockResolvedValue(undefined);
@@ -18,6 +18,7 @@ let statuses: AudioStatus[] = [];
 let engine: SiteAudioEngine;
 
 beforeEach(() => {
+  jest.useFakeTimers();
   sources.length = 0;
   gains.length = 0;
   statuses = [];
@@ -29,8 +30,9 @@ beforeEach(() => {
     destination: {},
     resume, suspend, close,
     decodeAudioData: jest.fn().mockResolvedValue({ duration: 160 }),
+    createDynamicsCompressor: () => ({ threshold: {}, knee: {}, ratio: {}, attack: {}, release: {}, connect: jest.fn() }),
     createGain: () => {
-      const gain = { gain: { value: 1, setTargetAtTime: jest.fn() }, connect: jest.fn() };
+      const gain = { gain: { value: 1, setTargetAtTime: jest.fn(), setValueAtTime: jest.fn(), cancelScheduledValues: jest.fn(), linearRampToValueAtTime: jest.fn() }, connect: jest.fn() };
       gains.push(gain);
       return gain;
     },
@@ -51,6 +53,7 @@ afterEach(() => {
   global.fetch = originalFetch;
   window.AudioContext = originalContext;
   Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+  jest.useRealTimers();
 });
 
 test('silent until opt-in; independent louder dialogue leaves looping music running', async () => {
@@ -59,8 +62,9 @@ test('silent until opt-in; independent louder dialogue leaves looping music runn
   await engine.enable();
   expect(sources).toHaveLength(1);
   expect(sources[0].loop).toBe(true);
-  expect(gains[0].gain.value).toBe(0.12);
-  expect(gains[1].gain.value).toBe(0.75);
+  expect(gains[0].gain.value).toBe(0);
+  expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0.75, 16);
+  expect(gains[1].gain.value).toBe(1);
   await engine.playDialogue();
   expect(sources).toHaveLength(2);
   expect(sources[0].stop).not.toHaveBeenCalled();
@@ -144,7 +148,7 @@ test('dialogues never immediately repeat and saved settings are validated', () =
   }
   expect(parseAudioSettings('broken')).toEqual(DEFAULT_AUDIO_SETTINGS);
   expect(parseAudioSettings('{"music":9,"dialogue":-1,"effects":"loud","randomDialogue":false}'))
-    .toEqual({ music: 1, dialogue: 0, effects: 0.65, randomDialogue: false });
+    .toEqual({ ...DEFAULT_AUDIO_SETTINGS, music: 1, dialogue: 0, effects: 0.95, randomDialogue: false });
 });
 
 test('the shipped playlist, looping theme, and both eye effects resolve to nonempty local assets', () => {
@@ -164,4 +168,56 @@ test('turning off dialogue cancels a voice still being downloaded', async () => 
   finish({ ok: true, arrayBuffer: async () => new ArrayBuffer(1) } as Response);
   await playing;
   expect(sources).toHaveLength(1);
+});
+
+test('theme mute leaves voices and eye effects active', async () => {
+  await engine.enable();
+  engine.setThemeMuted(true);
+  expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 12.05);
+  await engine.playDialogue();
+  await engine.playSharingan('mangekyo');
+  expect(sources).toHaveLength(3);
+  expect(gains[1].gain.value).toBe(1);
+  expect(gains[2].gain.value).toBe(0.95);
+  expect(sources[0].stop).not.toHaveBeenCalled();
+});
+
+test.each([3, 23])('waits 20 seconds AFTER a %s-second recording finishes', async seconds => {
+  await engine.enable();
+  await jest.advanceTimersByTimeAsync(19_999);
+  expect(sources).toHaveLength(1);
+  await jest.advanceTimersByTimeAsync(1);
+  expect(sources).toHaveLength(2);
+  await jest.advanceTimersByTimeAsync(seconds * 1000);
+  expect(sources).toHaveLength(2);
+  sources[1].onended?.();
+  await jest.advanceTimersByTimeAsync(19_999);
+  expect(sources).toHaveLength(2);
+  await jest.advanceTimersByTimeAsync(1);
+  expect(sources).toHaveLength(3);
+  expect(sources[0].stop).not.toHaveBeenCalled();
+});
+
+test('settings refresh does not reset an existing gap; disabled clips cannot be selected', async () => {
+  await engine.enable();
+  await jest.advanceTimersByTimeAsync(10_000);
+  engine.setSettings({ ...DEFAULT_AUDIO_SETTINGS });
+  await jest.advanceTimersByTimeAsync(10_000);
+  expect(sources).toHaveLength(2);
+  expect(nextDialogueIndex(0, 0.5, [])).toBe(-1);
+  expect(nextDialogueIndex(0, 0.5, [DIALOGUES[4].id])).toBe(4);
+  expect(nextDialogueIndex(4, 0.5, [DIALOGUES[4].id])).toBe(4);
+});
+
+test('a real gesture unlocks a pending autoplay attempt without starting duplicate music', async () => {
+  let allow!: () => void;
+  resume.mockImplementationOnce(() => new Promise<void>(resolve => { allow = resolve; }));
+  const starting = engine.enable();
+  const context = jest.mocked(window.AudioContext).mock.results[0].value;
+  context.state = 'suspended';
+  engine.unlock();
+  expect(resume).toHaveBeenCalledTimes(2);
+  context.state = 'running'; allow();
+  await starting;
+  expect(sources.filter(s => s.loop)).toHaveLength(1);
 });

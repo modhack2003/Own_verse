@@ -21,15 +21,20 @@ export const DIALOGUES = [
 ] as const;
 
 export type Dialogue = (typeof DIALOGUES)[number];
-export type AudioSettings = { music: number; dialogue: number; effects: number; randomDialogue: boolean };
-export const AUDIO_STORAGE_KEY = 'nd-audio-settings-v1';
+export type AudioSettings = {
+  music: number; dialogue: number; effects: number; randomDialogue: boolean;
+  intervalSeconds: number; fadeSeconds: number; enabledDialogueIds: string[];
+};
+export const THEME_MUTE_KEY = 'nd-theme-muted-v1';
+export const AUDIO_SETTINGS_EVENT = 'nd:audio-settings';
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  music: 0.12, dialogue: 0.75, effects: 0.65, randomDialogue: true,
+  music: 0.75, dialogue: 1, effects: 0.95, randomDialogue: true,
+  intervalSeconds: 20, fadeSeconds: 4, enabledDialogueIds: DIALOGUES.map(q => q.id),
 };
 
-export function parseAudioSettings(raw: string | null): AudioSettings {
+export function parseAudioSettings(raw: unknown): AudioSettings {
   try {
-    const value: unknown = JSON.parse(raw ?? 'null');
+    const value: unknown = typeof raw === 'string' ? JSON.parse(raw) : raw;
     if (!value || typeof value !== 'object') return { ...DEFAULT_AUDIO_SETTINGS };
     const record = value as Record<string, unknown>;
     const level = (key: 'music' | 'dialogue' | 'effects') => {
@@ -41,15 +46,24 @@ export function parseAudioSettings(raw: string | null): AudioSettings {
       music: level('music'), dialogue: level('dialogue'), effects: level('effects'),
       randomDialogue: typeof record.randomDialogue === 'boolean'
         ? record.randomDialogue : DEFAULT_AUDIO_SETTINGS.randomDialogue,
+      intervalSeconds: typeof record.intervalSeconds === 'number' && Number.isFinite(record.intervalSeconds)
+        ? Math.max(1, Math.min(600, Math.round(record.intervalSeconds))) : DEFAULT_AUDIO_SETTINGS.intervalSeconds,
+      fadeSeconds: typeof record.fadeSeconds === 'number' && Number.isFinite(record.fadeSeconds)
+        ? Math.max(0, Math.min(30, record.fadeSeconds)) : DEFAULT_AUDIO_SETTINGS.fadeSeconds,
+      enabledDialogueIds: Array.isArray(record.enabledDialogueIds)
+        ? [...new Set(record.enabledDialogueIds.filter((id): id is string =>
+          typeof id === 'string' && DIALOGUES.some(q => q.id === id)))]
+        : [...DEFAULT_AUDIO_SETTINGS.enabledDialogueIds],
     };
   } catch {
     return { ...DEFAULT_AUDIO_SETTINGS };
   }
 }
 
-/** Random timing avoids a repetitive loop; consecutive quotes never repeat. */
-export const dialogueDelay = () => 45_000 + Math.floor(Math.random() * 45_000);
-export function nextDialogueIndex(previous: number, random = Math.random()): number {
-  if (previous < 0) return Math.floor(random * DIALOGUES.length) % DIALOGUES.length;
-  return (previous + 1 + Math.floor(random * (DIALOGUES.length - 1))) % DIALOGUES.length;
+/** The scheduler starts its gap after the prior recording ends. */
+export function nextDialogueIndex(previous: number, random = Math.random(), enabledIds = DEFAULT_AUDIO_SETTINGS.enabledDialogueIds): number {
+  const enabled = DIALOGUES.flatMap((q, i) => enabledIds.includes(q.id) ? [i] : []);
+  const choices = enabled.filter(i => i !== previous);
+  const pool = choices.length ? choices : enabled;
+  return pool.length ? pool[Math.min(pool.length - 1, Math.floor(random * pool.length))] : -1;
 }

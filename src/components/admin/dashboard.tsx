@@ -17,6 +17,7 @@ import {
   Upload,
   User,
   Wrench,
+  Volume2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from './api-client';
@@ -28,6 +29,7 @@ import { GitHubPanel } from './github-panel';
 import { InboxPanel } from './inbox-panel';
 import { ImportPanel } from './import-panel';
 import { SecurityPanel } from './security-panel';
+import { AudioPanel } from './audio-panel';
 import { RequestsPanel } from './requests-panel';
 import { CURRENCIES, FINDING_PLATFORMS, SEVERITIES, formatMoney } from '@/lib/bounty';
 import { Btn } from './ui';
@@ -184,7 +186,8 @@ type TabId =
   | 'requests'
   | 'inbox'
   | 'import'
-  | 'security';
+  | 'security'
+  | 'audio';
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -197,6 +200,7 @@ const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string
   { id: 'certificates', label: 'Certificates', icon: Award },
   { id: 'skills', label: 'Skills', icon: Wrench },
   { id: 'blog', label: 'Blog', icon: FileText },
+  { id: 'audio', label: 'Site audio', icon: Volume2 },
   { id: 'requests', label: 'Requests', icon: Handshake },
   { id: 'inbox', label: 'Inbox', icon: Inbox },
   { id: 'import', label: 'LinkedIn import', icon: Upload },
@@ -317,6 +321,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === 'requests' && <RequestsPanel onNewCountChange={setNewRequests} />}
           {tab === 'import' && <ImportPanel />}
           {tab === 'security' && <SecurityPanel onLogout={onLogout} />}
+          {tab === 'audio' && <AudioPanel />}
           {tab === 'blog' && <InsightsPanel onImported={() => setBlogVersion(v => v + 1)} />}
           {tab in COLLECTIONS && <CollectionEditor key={`${tab}-${blogVersion}`} {...COLLECTIONS[tab]} />}
         </div>

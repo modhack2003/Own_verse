@@ -1,68 +1,57 @@
 import { fireEvent, render, screen, act } from '@testing-library/react';
 import { SiteAudio } from '../site-audio';
-import { AUDIO_STORAGE_KEY, SHARINGAN_AUDIO_EVENT } from '@/lib/site-audio-library';
-import { SILENT_AUDIO_STATUS, type AudioStatus } from '@/lib/site-audio';
+import { DEFAULT_AUDIO_SETTINGS, THEME_MUTE_KEY, SHARINGAN_AUDIO_EVENT } from '@/lib/site-audio-library';
 
-jest.mock('lucide-react', () => ({ Settings2: () => null, Volume2: () => null, VolumeX: () => null, X: () => null }));
-
+jest.mock('lucide-react', () => ({ Volume2: () => null, VolumeX: () => null }));
 const mockEnable = jest.fn();
 const mockDisable = jest.fn();
 const mockSettings = jest.fn();
-const mockDialogue = jest.fn();
+const mockThemeMute = jest.fn();
+const mockUnlock = jest.fn();
 const mockEffect = jest.fn();
 const mockDispose = jest.fn();
 const mockVisibility = jest.fn();
-let notify: (status: AudioStatus) => void;
 jest.mock('@/lib/site-audio', () => ({
-  SILENT_AUDIO_STATUS: { enabled: false, loading: false, error: null, quote: null },
-  SiteAudioEngine: jest.fn().mockImplementation((changed) => {
-    notify = changed;
-    return {
-      enable: mockEnable, disable: mockDisable, setSettings: mockSettings,
-      playDialogue: mockDialogue, playSharingan: mockEffect,
-      dispose: mockDispose, visibilityChanged: mockVisibility,
-    };
-  }),
+  SiteAudioEngine: jest.fn().mockImplementation(() => ({
+    enable: mockEnable, disable: mockDisable, setSettings: mockSettings,
+    setThemeMuted: mockThemeMute, unlock: mockUnlock, playSharingan: mockEffect,
+    dispose: mockDispose, visibilityChanged: mockVisibility,
+  })),
 }));
-
+const originalFetch = global.fetch;
 beforeEach(() => {
-  jest.clearAllMocks();
-  jest.useFakeTimers();
-  localStorage.clear();
+  jest.clearAllMocks(); jest.useFakeTimers(); localStorage.clear();
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => DEFAULT_AUDIO_SETTINGS });
 });
-afterEach(() => jest.useRealTimers());
+afterEach(() => { jest.useRealTimers(); global.fetch = originalFetch; });
 
-test('opt-in controls, saved levels, eye events and cleanup', () => {
+test('autostarts with admin settings and exposes only a theme mute button', async () => {
   const view = render(<SiteAudio />);
-  expect(mockEnable).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('button', { name: 'Enable site audio' }));
+  await act(async () => {});
   expect(mockEnable).toHaveBeenCalledTimes(1);
-  act(() => notify({ ...SILENT_AUDIO_STATUS, enabled: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Audio settings' }));
-  fireEvent.change(screen.getByRole('slider', { name: 'music volume' }), { target: { value: '8' } });
-  expect(JSON.parse(localStorage.getItem(AUDIO_STORAGE_KEY)!).music).toBe(0.08);
-  fireEvent.click(screen.getByRole('button', { name: 'Play a dialogue' }));
-  expect(mockDialogue).toHaveBeenCalledTimes(1);
+  expect(screen.getAllByRole('button')).toHaveLength(1);
+  expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+  expect(screen.queryByText('Play a dialogue')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Mute theme music' }));
+  expect(mockThemeMute).toHaveBeenLastCalledWith(true);
+  expect(localStorage.getItem(THEME_MUTE_KEY)).toBe('true');
+  expect(mockDisable).not.toHaveBeenCalled();
   act(() => window.dispatchEvent(new CustomEvent(SHARINGAN_AUDIO_EVENT, { detail: 'mangekyo' })));
   expect(mockEffect).toHaveBeenCalledWith('mangekyo');
-  fireEvent.click(screen.getByRole('button', { name: 'Mute site audio' }));
-  expect(mockDisable).toHaveBeenCalledTimes(1);
-  view.unmount();
-  expect(mockDispose).toHaveBeenCalledTimes(1);
+  fireEvent.pointerDown(window);
+  expect(mockUnlock).toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Unmute theme music' }));
+  expect(mockThemeMute).toHaveBeenLastCalledWith(false);
+  view.unmount(); expect(mockDispose).toHaveBeenCalledTimes(1);
 });
 
-test('random dialogue stops when switched off; no automatic sound after remount', () => {
-  const view = render(<SiteAudio />);
-  act(() => notify({ ...SILENT_AUDIO_STATUS, enabled: true }));
-  act(() => jest.advanceTimersByTime(90_000));
-  expect(mockDialogue).toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('button', { name: 'Audio settings' }));
-  fireEvent.click(screen.getByRole('checkbox', { name: 'Random character dialogue' }));
-  mockDialogue.mockClear();
-  act(() => jest.advanceTimersByTime(180_000));
-  expect(mockDialogue).not.toHaveBeenCalled();
-  view.unmount();
-  render(<SiteAudio />);
-  expect(mockEnable).not.toHaveBeenCalled();
-  expect(screen.getByRole('button', { name: 'Enable site audio' })).toBeVisible();
+test('visitor volume overrides are ignored; only theme mute persists', async () => {
+  localStorage.setItem('nd-audio-settings-v1', JSON.stringify({ music: 0, dialogue: 0, effects: 0 }));
+  localStorage.setItem(THEME_MUTE_KEY, 'true');
+  const settings = { ...DEFAULT_AUDIO_SETTINGS, music: 0.4, intervalSeconds: 25 };
+  jest.mocked(global.fetch).mockResolvedValue({ ok: true, json: async () => settings } as Response);
+  render(<SiteAudio />); await act(async () => {});
+  expect(mockThemeMute).toHaveBeenCalledWith(true);
+  expect(mockSettings).toHaveBeenLastCalledWith(settings);
+  expect(screen.getByRole('button', { name: 'Unmute theme music' })).toBeVisible();
 });

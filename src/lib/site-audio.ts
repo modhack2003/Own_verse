@@ -15,7 +15,7 @@ type Channel = 'music' | 'dialogue' | 'effects';
 /**
  * One mixer for the root layout. Web Audio gains also work on mobile Safari,
  * where HTMLMediaElement.volume cannot reliably provide independent levels.
- * No context, requests, or decoding happen until the explicit sound button.
+ * Attempts autoplay on load; unlock() resumes it from a gesture when required.
  */
 export class SiteAudioEngine {
   private context: AudioContext | null = null;
@@ -24,6 +24,8 @@ export class SiteAudioEngine {
   private music: AudioBufferSourceNode | null = null;
   private voice: AudioBufferSourceNode | null = null;
   private effect: AudioBufferSourceNode | null = null;
+  private themeMuted = false;
+  private dialogueTimer: ReturnType<typeof setTimeout> | null = null;
   private musicOffset = 0;
   private musicStartedAt = 0;
   private lastDialogue = -1;
@@ -52,22 +54,73 @@ export class SiteAudioEngine {
     const music = context.createGain();
     const dialogue = context.createGain();
     const effects = context.createGain();
+    const output = context.createDynamicsCompressor();
+    output.threshold.value = -3;
+    output.knee.value = 0;
+    output.ratio.value = 20;
+    output.attack.value = 0.003;
+    output.release.value = 0.2;
+    output.connect(context.destination);
     this.gains = { music, dialogue, effects };
     for (const key of ['music', 'dialogue', 'effects'] as const) {
-      this.gains[key].gain.value = this.settings[key];
-      this.gains[key].connect(context.destination);
+      this.gains[key].gain.value = key === 'music' ? 0 : this.settings[key];
+      this.gains[key].connect(output);
     }
     return context;
   }
 
   setSettings(settings: AudioSettings) {
-    this.settings = { ...settings };
+    if (JSON.stringify(settings) === JSON.stringify(this.settings)) return;
+    this.settings = { ...settings, enabledDialogueIds: [...settings.enabledDialogueIds] };
     if (this.context && this.gains) {
-      for (const key of ['music', 'dialogue', 'effects'] as const) {
+      for (const key of ['dialogue', 'effects'] as const) {
         this.gains[key].gain.setTargetAtTime(settings[key], this.context.currentTime, 0.03);
       }
+      if (this.music) this.fadeTheme();
     }
-    if (!settings.randomDialogue || settings.dialogue === 0) this.stopDialogue();
+    if (!settings.randomDialogue || settings.dialogue === 0 ||
+        (this.status.quote && !settings.enabledDialogueIds.includes(this.status.quote.id))) this.stopDialogue();
+    if (!this.voice && !this.voiceLoading) this.scheduleDialogue();
+  }
+
+  setThemeMuted(muted: boolean) {
+    this.themeMuted = muted;
+    if (this.music) this.fadeTheme(muted ? 0.05 : this.settings.fadeSeconds);
+  }
+
+  private fadeTheme(seconds = this.settings.fadeSeconds) {
+    if (!this.context || !this.gains) return;
+    const gain = this.gains.music.gain;
+    const now = this.context.currentTime;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(this.themeMuted ? 0 : this.settings.music, now + seconds);
+  }
+
+  /** Call synchronously in a pointer/key handler for browser autoplay policy. */
+  unlock() {
+    if (this.disposed) return;
+    if (!this.status.enabled) void this.enable();
+    else if (this.context?.state === 'suspended') void this.context.resume().catch(() => {});
+  }
+
+  private clearDialogueTimer() {
+    if (this.dialogueTimer) clearTimeout(this.dialogueTimer);
+    this.dialogueTimer = null;
+  }
+
+  private scheduleDialogue() {
+    this.clearDialogueTimer();
+    if (this.disposed || !this.status.enabled || this.status.loading || document.hidden ||
+        !this.settings.randomDialogue || !this.settings.dialogue || !this.settings.enabledDialogueIds.length ||
+        this.voice || this.voiceLoading) return;
+    this.dialogueTimer = setTimeout(() => {
+      this.dialogueTimer = null;
+      const editing = document.activeElement?.matches('input, textarea, select, [contenteditable="true"]');
+      const media = Array.from(document.querySelectorAll('audio, video')).some(el => !(el as HTMLMediaElement).paused);
+      if (editing || media) this.scheduleDialogue();
+      else void this.playDialogue();
+    }, this.settings.intervalSeconds * 1000);
   }
 
   private buffer(src: string) {
@@ -117,7 +170,9 @@ export class SiteAudioEngine {
       music.start(0, this.musicOffset % buffer.duration);
       this.musicStartedAt = context.currentTime;
       this.music = music;
+      this.fadeTheme();
       this.update({ loading: false });
+      this.scheduleDialogue();
     } catch {
       if (this.disposed || epoch !== this.epoch) return;
       this.disable();
@@ -133,6 +188,7 @@ export class SiteAudioEngine {
   }
 
   stopDialogue() {
+    this.clearDialogueTimer();
     ++this.voiceRequest;
     this.stop(this.voice);
     this.voice = null;
@@ -163,7 +219,7 @@ export class SiteAudioEngine {
       ++this.effectRequest;
       await this.context.suspend().catch(() => {});
     } else {
-      try { await this.context.resume(); }
+      try { await this.context.resume(); this.scheduleDialogue(); }
       catch {
         this.disable();
         this.update({ error: 'Tap Sound to resume audio.' });
@@ -198,7 +254,9 @@ export class SiteAudioEngine {
     this.voiceLoading = true;
     const request = ++this.voiceRequest;
     const epoch = this.epoch;
-    const index = nextDialogueIndex(this.lastDialogue);
+    this.clearDialogueTimer();
+    const index = nextDialogueIndex(this.lastDialogue, Math.random(), this.settings.enabledDialogueIds);
+    if (index < 0) { this.voiceLoading = false; return; }
     const quote = DIALOGUES[index];
     try {
       const buffer = await this.buffer(quote.src);
@@ -213,6 +271,7 @@ export class SiteAudioEngine {
         if (this.voice === voice) {
           this.voice = null;
           this.update({ quote: null });
+          this.scheduleDialogue();
         }
       };
       voice.start();
@@ -221,6 +280,7 @@ export class SiteAudioEngine {
       // Skip an unavailable quote and leave the music running.
     } finally {
       this.voiceLoading = false;
+      if (!this.voice) this.scheduleDialogue();
     }
   }
 
