@@ -1,0 +1,128 @@
+[
+  {
+    "file": "01_obito_heart.mp3",
+    "source": "https://www.myinstants.com/en/instant/obito-sad-speech-72170/",
+    "start_seconds": 0,
+    "end_seconds": 7.44,
+    "duration_seconds": 7.44,
+    "loudness_LUFS": -18.26,
+    "true_peak_dBTP": -5.76,
+    "notes": "English matching excerpt; upload is an edit with music; unrelated singing after the requested dialogue was excluded.",
+    "sha256": "afa58b260bcf06ddd796ddfc2bb251fb4c54a91da5fb1d63a01b771460d34891"
+  },
+  {
+    "file": "02_itachi_weak_hate.mp3",
+    "source": "https://www.myinstants.com/en/instant/you-are-still-to-weak-itachi-naruto-part-1-69952/",
+    "start_seconds": 0,
+    "end_seconds": 5.851,
+    "duration_seconds": 5.832,
+    "loudness_LUFS": -18.26,
+    "true_peak_dBTP": -5.86,
+    "notes": "English matching excerpt; unrelated following dialogue excluded.",
+    "sha256": "fb7f6801ecc390cf5f55cbe6575b24c5035beb620599de71234da847e204e150"
+  },
+  {
+    "file": "03_itachi_genjutsu.mp3",
+    "source": "https://www.myinstants.com/en/instant/itachi-genjutsu-28835/",
+    "start_seconds": 0,
+    "end_seconds": 3.024,
+    "duration_seconds": 3.024,
+    "loudness_LUFS": -18.28,
+    "true_peak_dBTP": -5.95,
+    "notes": "English matching excerpt.",
+    "sha256": "c61791d3379c41b98aa0d3e03ecf6d54474b33514a3edf0d308956a6093e1924"
+  },
+  {
+    "file": "04_obito_love_hate.mp3",
+    "source": "https://tuna.voicemod.net/sound/0b1d4983-9698-4ad1-b8f2-ca4504060e08",
+    "start_seconds": 0,
+    "end_seconds": 6.6,
+    "duration_seconds": 6.6,
+    "loudness_LUFS": -18.27,
+    "true_peak_dBTP": -7.1,
+    "notes": "English matching excerpt. The second requested love/hate wording is treated as an alternate translation, not a separate verified clip.",
+    "sha256": "795ebbee81d4c96ba2d674f1c0fd855e760ffb478ee0fb91231b63ebf941c760"
+  },
+  {
+    "file": "05_madara_reality.mp3",
+    "source": "https://tuna.voicemod.net/sound/f1330738-777d-4a7f-961b-82a4ce2e9f12",
+    "start_seconds": 0,
+    "end_seconds": 17.04,
+    "duration_seconds": 17.04,
+    "loudness_LUFS": -18.38,
+    "true_peak_dBTP": -2.27,
+    "notes": "English dub wording differs slightly from the supplied text. Only the requested opening passage is included.",
+    "sha256": "f7c5f4d8a06e7699d69350897b8af7dcd1a51638ff99c491b9fe2508dd89648c"
+  },
+  {
+    "file": "06_pain_partial.mp3",
+    "source": "https://tuna.voicemod.net/sound/67f4da9f-ffe3-43de-8628-df03c9122349",
+    "start_seconds": 0,
+    "end_seconds": 5.538,
+    "duration_seconds": 5.544,
+    "loudness_LUFS": -18.25,
+    "true_peak_dBTP": -3.89,
+    "notes": "PARTIAL: English clip does not contain contemplate pain. Do not label it a complete exact match.",
+    "sha256": "590b59bf406be07eea9985c4d90838afacb564fd55a45cd66b67094849cf1746"
+  },
+  {
+    "file": "07_madara_despair.mp3",
+    "source": "User upload: Madara.mp3",
+    "start_seconds": 5.9,
+    "end_seconds": 11.25,
+    "duration_seconds": 5.376,
+    "loudness_LUFS": -18.26,
+    "true_peak_dBTP": -5.84,
+    "notes": "Speech excerpt; non-dialogue introduction and outro omitted.",
+    "sha256": "6e6caa1fa16549289cc0ed8df0b6d1b26ec9e5645ba46d83b9f1e3eaa1662b10"
+  },
+  {
+    "file": "08_jiraiya_shinobi_life.mp3",
+    "source": "User upload: Jiraya tale of gallent.mp3",
+    "start_seconds": 0.35,
+    "end_seconds": 15.3,
+    "duration_seconds": 14.976,
+    "loudness_LUFS": -18.61,
+    "true_peak_dBTP": -2.71,
+    "notes": "Dialogue retained with brief head and tail padding.",
+    "sha256": "9a89ea0854ad40cab3440ddcd2d5d92774f430b6d5f960d4e6605ec30559b523"
+  },
+  {
+    "file": "09_itachi_reality.mp3",
+    "source": "User upload: Itachi's word.mp3",
+    "start_seconds": 0.55,
+    "end_seconds": 23.18,
+    "duration_seconds": 22.656,
+    "loudness_LUFS": -18.26,
+    "true_peak_dBTP": -2.79,
+    "notes": "Reality monologue; repeated opening at the end omitted.",
+    "sha256": "187d747d91a0df9a6b25050bf4512e5b5afecc73317df178eaef8c08965aba7a"
+  },
+  {
+    "file": "naruto-theme.mp3",
+    "source": "Owner upload: naruto Theme .mp3",
+    "duration_seconds": 28.56,
+    "loudness_LUFS": -18.27,
+    "true_peak_dBTP": -7.76,
+    "notes": "500 ms circular crossfade, re-encoded, normalized near -18 LUFS; no replacement music.",
+    "sha256": "0ba49a29efdd10f2199dc7871e61d6410d624a0542844925356dc94ee3ff67a2"
+  },
+  {
+    "file": "mangekyo.mp3",
+    "source": "Owner upload: Sharingan.mp3",
+    "duration_seconds": 2.064,
+    "loudness_LUFS": -18.24,
+    "true_peak_dBTP": -4.54,
+    "notes": "300 ms leading silence removed; low rumble reduced; short edge fades; normalized near -18 LUFS.",
+    "sha256": "b080b54e8bca1004604da9f150e355910acbea110cf9ebb4e8e56091caf6b344"
+  },
+  {
+    "file": "sharingan.mp3",
+    "source": "https://www.myinstants.com/en/instant/sharingan-begin-9776/",
+    "duration_seconds": 2.09,
+    "loudness_LUFS": -17.97,
+    "true_peak_dBTP": -7.51,
+    "notes": "Existing normal-eye return reference, retained from the draft.",
+    "sha256": "045514b8c4023126891561ab0f7f1d6a126d183666771a0e55241ffbd0df2742"
+  }
+]

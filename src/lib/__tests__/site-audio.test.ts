@@ -1,5 +1,7 @@
 import { SiteAudioEngine, type AudioStatus } from '../site-audio';
-import { DEFAULT_AUDIO_SETTINGS, MUSIC_TRACK, nextDialogueIndex, parseAudioSettings } from '../site-audio-library';
+import { DEFAULT_AUDIO_SETTINGS, DIALOGUES, MUSIC_TRACK, nextDialogueIndex, parseAudioSettings } from '../site-audio-library';
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 const sources: Array<{
   buffer: { duration: number } | null; loop: boolean;
@@ -135,7 +137,7 @@ test('missing music leaves an honest retry state; effect failures do not stop mu
 });
 
 test('dialogues never immediately repeat and saved settings are validated', () => {
-  for (let previous = 0; previous < 3; previous++) {
+  for (let previous = 0; previous < DIALOGUES.length; previous++) {
     for (const random of [0, 0.2, 0.5, 0.999]) {
       expect(nextDialogueIndex(previous, random)).not.toBe(previous);
     }
@@ -143,6 +145,14 @@ test('dialogues never immediately repeat and saved settings are validated', () =
   expect(parseAudioSettings('broken')).toEqual(DEFAULT_AUDIO_SETTINGS);
   expect(parseAudioSettings('{"music":9,"dialogue":-1,"effects":"loud","randomDialogue":false}'))
     .toEqual({ music: 1, dialogue: 0, effects: 0.65, randomDialogue: false });
+});
+
+test('the shipped playlist, looping theme, and both eye effects resolve to nonempty local assets', () => {
+  for (const src of [MUSIC_TRACK, '/audio/mangekyo.mp3', '/audio/sharingan.mp3', ...DIALOGUES.map((quote) => quote.src)]) {
+    const file = join(process.cwd(), 'public', src);
+    expect(existsSync(file)).toBe(true);
+    expect(statSync(file).size).toBeGreaterThan(1_000);
+  }
 });
 
 test('turning off dialogue cancels a voice still being downloaded', async () => {

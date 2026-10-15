@@ -9,9 +9,15 @@ export function sharinganSound(phase: SharinganSound) {
 export const MUSIC_TRACK = '/audio/naruto-theme.mp3';
 
 export const DIALOGUES = [
-  { id: 'dattebayo', character: 'Naruto', text: 'Dattebayo!', src: '/audio/dattebayo.mp3' },
-  { id: 'believe-it', character: 'Naruto', text: 'Believe it!', src: '/audio/believe-it.mp3' },
-  { id: 'wake-up', character: 'Madara', text: 'Wake up to reality.', src: '/audio/wake-up.mp3' },
+  { id: 'obito-heart', character: 'Obito', text: 'Look at me! There is nothing in my heart.', src: '/audio/01_obito_heart.mp3' },
+  { id: 'itachi-hate', character: 'Itachi', text: 'You are still too weak. You do not have enough hate.', src: '/audio/02_itachi_weak_hate.mp3' },
+  { id: 'itachi-genjutsu', character: 'Itachi', text: 'You are already under my genjutsu.', src: '/audio/03_itachi_genjutsu.mp3' },
+  { id: 'obito-love', character: 'Obito', text: 'When a man learns to feel love, he must also bear the risk of feeling hate.', src: '/audio/04_obito_love_hate.mp3' },
+  { id: 'madara-reality', character: 'Madara', text: 'Wake up to reality.', src: '/audio/05_madara_reality.mp3' },
+  { id: 'pain', character: 'Pain', text: 'Feel pain, accept pain, and know pain.', src: '/audio/06_pain_partial.mp3' },
+  { id: 'madara-despair', character: 'Madara', text: 'This world holds only despair. It is not worth existing.', src: '/audio/07_madara_despair.mp3' },
+  { id: 'jiraiya-life', character: 'Jiraiya', text: 'In the shinobi world, it is not how you live. It is how you die.', src: '/audio/08_jiraiya_shinobi_life.mp3' },
+  { id: 'itachi-reality', character: 'Itachi', text: 'Each of us lives dependent and bound by our individual knowledge and our awareness.', src: '/audio/09_itachi_reality.mp3' },
 ] as const;
 
 export type Dialogue = (typeof DIALOGUES)[number];

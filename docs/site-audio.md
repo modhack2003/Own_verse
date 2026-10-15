@@ -1,17 +1,25 @@
 # Site audio
 
-This change is a draft until the owner supplies the original Naruto theme recording.
-The owner requested original audio only. No replacement, cover, synthesized music,
-or generated voice is included. Do not publish the feature without the theme file.
+The owner supplied the theme and Sharingan transformation effect and approved
+the six internet dialogue finds. Their three additional dialogue uploads bring
+the playlist to nine clips. The recordings were cleaned without generating or
+replacing voices. Third-party uploads have not been independently authenticated
+as original-cast masters; the owner accepted the candidates for this project.
 
 ## Files
 
-- Required before release: `public/audio/naruto-theme.mp3`.
-- Short soundboard references: Sharingan activation/return, Mangekyo activation,
-  Naruto's Dattebayo and Believe it, and Madara's Wake up to reality.
+- `public/audio/naruto-theme.mp3`: the owner's approximately 29-second theme,
+  normalized with a 500 ms circular crossfade (about 28.5 seconds per loop).
+- `public/audio/mangekyo.mp3`: the owner's transformation effect, with its
+  approximately 300 ms leading silence removed for responsive eye taps.
+- `public/audio/sharingan.mp3`: the existing normal-eye return effect.
+- Nine dialogue clips: Obito's heart and love/hate lines; Itachi's weak/hate,
+  genjutsu and reality passages; Madara's reality and despair lines; Pain;
+  and Jiraiya's shinobi-life passage.
 - Provenance is in `public/audio/CREDITS.txt`.
-- Replace the short references with the owner's preferred original clips if supplied.
-  Keep the paths in `src/lib/site-audio-library.ts` in sync.
+- Processing and measured levels are in `public/audio/audio-report.json`.
+- The older draft's Dattebayo, Believe it, and duplicate short Wake up clip have
+  been replaced by the approved nine-clip review playlist.
 
 ## Behavior
 
@@ -19,6 +27,8 @@ or generated voice is included. Do not publish the feature without the theme fil
 - No audio requests, AudioContext, or decoding until the visitor enables sound.
 - One root-layout mixer persists during Next.js client navigation.
 - Default music volume is 12%, dialogue 75%, effects 65%; all are adjustable.
+- The theme and dialogue files are normalized near -18 LUFS before channel gain,
+  placing dialogue about 16 dB above the theme at the default settings.
 - Independent Web Audio gain channels let voices overlap the continuously looping music.
 - Random dialogue runs every 45–90 seconds, never repeats immediately, and skips typing,
   background tabs, and other active HTML audio/video.
@@ -37,6 +47,6 @@ Mixer tests cover independent overlap, mute during loading, background-tab suspe
 missing music/retry, dialogue cancellation, settings parsing, and no immediate repeats.
 UI tests cover opt-in, persistence, random-dialogue toggle, event wiring, and cleanup.
 
-Before release, check the supplied theme and clips in a real browser, verify a client
-navigation preserves the same playing music, and confirm the original soundtrack plays
-quietly under dialogue. Test an actual iOS/Safari device when available.
+Manual browser verification should cover a complete loop, dialogue/effect overlap,
+mute, sliders and a client navigation preserving the same music source. Actual
+iOS/Safari device listening remains a separate check when a device is available.

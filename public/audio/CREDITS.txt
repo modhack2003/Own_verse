@@ -1,28 +1,43 @@
-NARUTO AUDIO REFERENCES
+NARUTO SITE AUDIO — OWNER-APPROVED RECORDINGS
 
-Background music:
-Awaiting the owner's original Naruto theme file: naruto-theme.mp3.
-No replacement instrumental is included.
-
-Short original-series sound references located on Myinstants:
-sharingan.mp3
+Theme: naruto-theme.mp3
+  Supplied by the owner as "naruto Theme .mp3" on 2026-10-15.
+  Original upload metadata labels it "Itachi Theme Ringtone"; the supplied track
+  is used as requested. Circular crossfade at the loop boundary, normalized.
+Transformation: mangekyo.mp3
+  Supplied by the owner as "Sharingan.mp3" on 2026-10-15.
+  Leading silence trimmed; normalized; short edge fades.
+Normal-eye return: sharingan.mp3
   https://www.myinstants.com/en/instant/sharingan-begin-9776/
-  Original download: /media/sounds/sharingan_sound_only.mp3
-mangekyo.mp3
-  https://www.myinstants.com/en/instant/mangekyo-sharingan/
-  Original download: /media/sounds/mangekyoshi-sharingan.mp3
-believe-it.mp3
-  https://www.myinstants.com/en/instant/naruto-believe-it-70931/
-  Original download: /media/sounds/naruto-believe-it_CFOLfj9.mp3
-dattebayo.mp3
-  https://www.myinstants.com/en/instant/dattebayo-naruto-6237/
-  Original download: /media/sounds/d-a-t-t-e-b-a-y-o-meme-audiotrimmer.mp3
-wake-up.mp3
-  https://www.myinstants.com/en/instant/madara-wake-up-to-reality-37572/
-  Original download: /media/sounds/madara-wake-up-to-reality.mp3
+  Retrieved 2026-10-14; existing short reference retained.
 
-Retrieved 2026-10-14. Character references are brief excerpts, not full speeches.
-Files were trimmed where necessary, volume-normalized and encoded as MP3.
-No synthetic speech or character-voice cloning is used.
-Naruto and the original recordings belong to their respective rights holders.
-Soundboard availability is not a grant of a Creative Commons license.
+Owner's three dialogue uploads:
+07_madara_despair.mp3: "Madara.mp3" (spoken excerpt, music padding removed).
+08_jiraiya_shinobi_life.mp3: "Jiraya tale of gallent.mp3".
+09_itachi_reality.mp3: "Itachi's word.mp3" (repeated opening at end removed).
+
+Six third-party English dialogue candidates accepted by the owner:
+01_obito_heart.mp3
+  https://www.myinstants.com/en/instant/obito-sad-speech-72170/
+02_itachi_weak_hate.mp3
+  https://www.myinstants.com/en/instant/you-are-still-to-weak-itachi-naruto-part-1-69952/
+03_itachi_genjutsu.mp3
+  https://www.myinstants.com/en/instant/itachi-genjutsu-28835/
+04_obito_love_hate.mp3
+  https://tuna.voicemod.net/sound/0b1d4983-9698-4ad1-b8f2-ca4504060e08
+05_madara_reality.mp3
+  https://tuna.voicemod.net/sound/f1330738-777d-4a7f-961b-82a4ce2e9f12
+06_pain_partial.mp3
+  https://tuna.voicemod.net/sound/67f4da9f-ffe3-43de-8628-df03c9122349
+  English variant omits "contemplate pain".
+Retrieved 2026-10-15. Character labels follow the supplied/source attribution.
+These third-party uploads are not independently authenticated original-cast
+masters. The owner explicitly accepted these recordings for the project.
+
+Dialogue processing: light rumble/hiss reduction, gentle speech EQ, edge fades,
+two-pass loudness normalization near -18 LUFS, 48 kHz / 192 kb/s stereo MP3.
+Existing mixed-in music, reverb and source artifacts may remain. No voice
+synthesis, voice cloning, pitch shifting, or replacement music was used.
+Measured levels and trim notes are recorded in audio-report.json.
+Naruto and the recordings belong to their respective rights holders.
+Soundboard availability does not itself grant a Creative Commons license.
