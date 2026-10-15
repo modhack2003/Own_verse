@@ -76,7 +76,7 @@ export class SiteAudioEngine {
       for (const key of ['dialogue', 'effects'] as const) {
         this.gains[key].gain.setTargetAtTime(settings[key], this.context.currentTime, 0.03);
       }
-      if (this.music) this.fadeTheme();
+      if (this.music) this.fadeTheme(this.voice ? 0.15 : this.settings.fadeSeconds);
     }
     if (!settings.randomDialogue || settings.dialogue === 0 ||
         (this.status.quote && !settings.enabledDialogueIds.includes(this.status.quote.id))) this.stopDialogue();
@@ -94,7 +94,8 @@ export class SiteAudioEngine {
     const now = this.context.currentTime;
     gain.cancelScheduledValues(now);
     gain.setValueAtTime(gain.value, now);
-    gain.linearRampToValueAtTime(this.themeMuted ? 0 : this.settings.music, now + seconds);
+    const target = this.themeMuted ? 0 : this.settings.music * (this.voice ? 0.2 : 1);
+    gain.linearRampToValueAtTime(target, now + seconds);
   }
 
   /** Call synchronously in a pointer/key handler for browser autoplay policy. */
@@ -190,8 +191,10 @@ export class SiteAudioEngine {
   stopDialogue() {
     this.clearDialogueTimer();
     ++this.voiceRequest;
+    const wasPlaying = !!this.voice;
     this.stop(this.voice);
     this.voice = null;
+    if (wasPlaying && this.music) this.fadeTheme(0.8);
     if (this.status.quote) this.update({ quote: null });
   }
 
@@ -264,18 +267,20 @@ export class SiteAudioEngine {
           this.settings.dialogue === 0 || this.context?.state !== 'running') return;
       const voice = this.node(buffer, 'dialogue');
       this.voice = voice;
+      this.fadeTheme(0.15);
       this.lastDialogue = index;
       this.update({ quote });
       voice.onended = () => {
         voice.disconnect();
         if (this.voice === voice) {
           this.voice = null;
+          this.fadeTheme(0.8);
           this.update({ quote: null });
           this.scheduleDialogue();
         }
       };
       voice.start();
-      // Music is a separate source: no stop, pause, restart, or ducking here.
+      // Duck only its gain: the same looping music source continues underneath.
     } catch {
       // Skip an unavailable quote and leave the music running.
     } finally {

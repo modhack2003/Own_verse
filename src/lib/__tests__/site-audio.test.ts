@@ -221,3 +221,32 @@ test('a real gesture unlocks a pending autoplay attempt without starting duplica
   await starting;
   expect(sources.filter(s => s.loop)).toHaveLength(1);
 });
+
+test.each(['end', 'cancel'] as const)('ducks under an active quote and restores the saved theme level on %s', async action => {
+  await engine.enable();
+  await engine.playDialogue();
+  expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(expect.closeTo(0.15), 12.15);
+  engine.setSettings({ ...DEFAULT_AUDIO_SETTINGS, music: 0.4 });
+  expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(expect.closeTo(0.08), 12.15);
+  if (action === 'end') sources[1].onended?.();
+  else engine.stopDialogue();
+  expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0.4, 12.8);
+  expect(sources[0].start).toHaveBeenCalledTimes(1);
+  expect(sources[0].stop).not.toHaveBeenCalled();
+});
+
+test('ducking waits for the recording to load and never overrides theme mute', async () => {
+  await engine.enable();
+  gains[0].gain.linearRampToValueAtTime.mockClear();
+  let finish!: (r: Response) => void;
+  jest.mocked(global.fetch).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const playing = engine.playDialogue();
+  expect(gains[0].gain.linearRampToValueAtTime).not.toHaveBeenCalled();
+  finish({ ok: true, arrayBuffer: async () => new ArrayBuffer(1) } as Response);
+  await playing;
+  engine.setThemeMuted(true);
+  sources[1].onended?.();
+  expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 12.8);
+  engine.setThemeMuted(false);
+  expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0.75, 16);
+});

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { GitHubPanel } from '../github-panel';
 import { api } from '../api-client';
 const toast = jest.fn();
@@ -19,4 +19,26 @@ test('checks for automatic refresh and labels repos hidden from the public site'
   await waitFor(() => expect(screen.getByRole('button', { name: 'Sync now' })).toBeEnabled());
   expect(screen.getByRole('switch', { name: 'Show repo on the site' })).toHaveAttribute('aria-checked', 'false');
   expect(screen.getByRole('button', { name: 'Refresh list' })).toBeEnabled();
+});
+
+test('a zero repository pin position can be cleared and saved as automatic ordering', async () => {
+  jest.clearAllMocks();
+  jest.mocked(api).mockImplementation(async (path, options) => {
+    if (path === '/api/personal-data') return null as never;
+    if (path === '/api/github/sync') return { skipped: true, data: null } as never;
+    if (options?.method === 'PUT') return { repository: { ...repo, displayOrder: null } } as never;
+    return { repositories: [{ ...repo, displayOrder: 0 }], stats: { lastSync: null, lastError: null } } as never;
+  });
+  render(<GitHubPanel />);
+  const edit = await screen.findByRole('button', { name: 'Customize' });
+  await waitFor(() => expect(edit).toBeEnabled());
+  fireEvent.click(edit);
+  const position = screen.getByLabelText('Pin position');
+  expect(position).toHaveValue(0);
+  fireEvent.change(position, { target: { value: '' } });
+  expect(position).toHaveValue(null);
+  fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true }));
+  await waitFor(() => expect(api).toHaveBeenCalledWith('/api/github/repos/1', {
+    method: 'PUT', body: { customTitle: '', customDescription: '', customTags: [], displayOrder: null },
+  }));
 });

@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { getFooterData } from "@/lib/portfolio-data";
 import { ExperienceGate } from "@/components/cyber/experience-gate";
 import { SiteAudio } from '@/components/cyber/site-audio';
+import { MUSIC_TRACK } from '@/lib/site-audio-library';
 import { CyberCursor } from "@/components/cyber/cyber-cursor";
 
 const SITE_TITLE = 'Bikram Dey | Hack. Secure. Defend.';
@@ -57,6 +58,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <link rel="preload" as="fetch" href={MUSIC_TRACK} crossOrigin="anonymous" fetchPriority="high" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
