@@ -48,3 +48,7 @@ The integration scripts refuse any URL except their exact localhost disposable d
 8. To measure mobile performance, start the production server on port 3100 with the e2e database and run `node scripts/measure-mobile.cjs`. `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` can select an already installed Chromium.
 
 CI performs the database integrations and all 12 browser scenarios. Missing-database release refusal is checked explicitly. CI stores browser failure artifacts for seven days.
+
+## Recorded laboratory check (16 October 2026)
+
+With the conditions above, the synthetic home page recorded LCP 888 ms, CLS 0.0167, local-server TTFB 53 ms, and five font requests totaling 131,626 transferred bytes. Fonts finished loading, safe mode was active, and there were no page errors or horizontal overflow. Observed long-task blocking over the sample remained 2,268 ms under 4× CPU throttling; this is a remaining scripting/rendering cost, not a claim that all mobile performance work is complete. No comparable production before/after field measurement was available.

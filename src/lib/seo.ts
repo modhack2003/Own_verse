@@ -6,7 +6,7 @@ export function publicMetadata(title: string, description: string, path: string)
   const url = `${SITE_URL}${path}`;
   return {
     title, description, alternates: { canonical: url },
-    openGraph: { title, description, url, type: 'website', siteName: SITE_NAME, images: [{ url: `${SITE_URL}/social-preview.jpg`, width: 1200, height: 630, alt: 'Bikram Dey — cybersecurity portfolio' }] },
+    openGraph: { title, description, url, type: 'website', siteName: SITE_NAME, images: [{ url: `${SITE_URL}/social-preview.jpg`, width: 1280, height: 640, alt: 'Bikram Dey — cybersecurity portfolio' }] },
     twitter: { card: 'summary_large_image', title, description, images: [`${SITE_URL}/social-preview.jpg`] },
   };
 }

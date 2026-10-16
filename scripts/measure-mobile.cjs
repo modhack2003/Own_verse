@@ -29,7 +29,7 @@ const fs = require('node:fs/promises');
     const result = { conditions: 'Chromium Pixel 7 emulation, 4x CPU slowdown, 1.6 Mbps down / 150 ms latency; synthetic local data; laboratory observation, not field Core Web Vitals', ...metrics, fontRequests: fonts.size, fontBytes: [...fonts.values()].reduce((sum, font) => sum + font.bytes, 0), errors };
     await fs.mkdir('test-results', { recursive: true });
     await fs.writeFile('test-results/mobile-performance.json', JSON.stringify(result, null, 2));
-    await page.screenshot({ path: 'test-results/mobile-home.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/mobile-home.png', fullPage: false });
     console.log(JSON.stringify(result, null, 2));
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
