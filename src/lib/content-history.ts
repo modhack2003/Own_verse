@@ -40,7 +40,7 @@ function activeWhere(where: unknown) { return { ...(where as object ?? {}), AND:
 
 /** One transaction contains the edit and its full revision. Failure never leaves an unrecorded edit. */
 export function createContentClient(raw: PrismaClient): PrismaClient {
-  return raw.$extends({ query: { $allModels: { async $allOperations({ model, operation, args, query }) {
+  const client = raw.$extends({ query: { $allModels: { async $allOperations({ model, operation, args, query }) {
     if (!isContentModel(model)) return query(args);
     const options = args as Record<string, unknown>;
     if (reads.has(operation)) return query({ ...args, where: activeWhere(options.where) } as typeof args);
@@ -50,6 +50,17 @@ export function createContentClient(raw: PrismaClient): PrismaClient {
       return writeContent(tx, model, operation, options, actor);
     }, { timeout: 30000 });
   } } } }) as unknown as PrismaClient;
+  // Interactive callers must use the same raw transaction for content and history.
+  // Re-entering the standalone query hook here would commit edits independently.
+  return new Proxy(client, { get(target, key) {
+    if (key === '$transaction') return async (work: unknown, options?: { maxWait?: number; timeout?: number }) => {
+      if (typeof work !== 'function') throw new Error('Use an interactive transaction callback for audited content.');
+      const actor = await contentActor();
+      return raw.$transaction(tx => work(contentTransaction(tx, actor)), options);
+    };
+    const value = Reflect.get(target, key);
+    return typeof value === 'function' ? value.bind(target) : value;
+  } });
 }
 
 async function writeContent(tx: Prisma.TransactionClient, model: ContentModel, operation: string, options: Record<string, unknown>, actor: string) {

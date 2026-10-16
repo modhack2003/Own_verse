@@ -36,6 +36,13 @@ async function main() {
   // The LinkedIn path shares its existing transaction and logs each write once.
   await raw.$transaction(async tx => { const client = contentTransaction(tx, 'test-import'); await client.project.create({ data: { title: 'Imported', description: '', tags: [] } }); });
   assert.equal(await raw.contentRevision.count({ where: { actor: 'test-import' } }), 1);
+  const revisionsBeforeFailure = await raw.contentRevision.count();
+  await assert.rejects(db.$transaction(async tx => {
+    await tx.project.create({ data: { title: 'Outer rollback', description: '', tags: [] } });
+    throw new Error('outer rollback');
+  }), /outer rollback/);
+  assert.equal(await raw.project.count({ where: { title: 'Outer rollback' } }), 0);
+  assert.equal(await raw.contentRevision.count(), revisionsBeforeFailure, 'outer rollback must include revisions');
   await db.personalData.create({ data: { name: 'Test Operator', title: 'Test', bio: 'Fixture', github: '', linkedin: '', email: 'test@example.com', resumeUrl: '', bountyProfiles: [] } });
   await db.skill.create({ data: { languages: ['Python'], tools: [], areas: [] } });
   await db.blogPost.create({ data: { title: 'Published test', slug: 'published-test', excerpt: '', content: 'Safe content', tags: ['Test'], published: true, publishedAt: new Date() } });
