@@ -11,7 +11,7 @@ const SharinganEye = dynamic(() => import('./sharingan').then((module) => module
 
 export function NotFoundScreen() {
   return (
-    <main className="relative overflow-hidden bg-ink text-bone">
+    <main id="main-content" tabIndex={-1} className="relative overflow-hidden bg-ink text-bone">
       <div aria-hidden className="pointer-events-none absolute inset-0 grid-cross" />
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-signal/40 py-6 monofont text-[10px] uppercase tracking-[0.2em]">

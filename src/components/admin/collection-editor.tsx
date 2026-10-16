@@ -138,7 +138,7 @@ export function CollectionEditor({
   };
 
   const remove = async (item: Item) => {
-    if (!window.confirm(`Delete "${itemTitle(item)}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Move "${itemTitle(item)}" to Trash? You can restore it from History & recovery.`)) return;
     setDeleting(item.id);
     try {
       await api(`${endpoint}/${item.id}`, { method: 'DELETE' });

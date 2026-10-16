@@ -1,5 +1,6 @@
+import { contentTransaction, contentActor } from '@/lib/content-history';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma, rawPrisma } from '@/lib/prisma';
 import { requireAdminSession } from '@/lib/admin-auth';
 import { handleError, jsonError, readJson, revalidatePublic } from '@/lib/api';
 import { importLinkedIn, parseLinkedInExport } from '@/lib/linkedin-import';
@@ -44,9 +45,10 @@ export async function POST(request: NextRequest) {
       overwriteProfile: body.overwriteProfile !== false,
     };
     // A preview never writes; a real import commits all sections together.
+    const actor = await contentActor();
     const summary = options.dryRun
       ? await importLinkedIn(prisma, parsed, options)
-      : await prisma.$transaction((tx) => importLinkedIn(tx, parsed, options), { timeout: 45_000 });
+      : await rawPrisma.$transaction((tx) => importLinkedIn(contentTransaction(tx, actor), parsed, options), { timeout: 45_000 });
     if (!summary.dryRun) revalidatePublic();
     return NextResponse.json({ success: true, summary });
   } catch (error) {

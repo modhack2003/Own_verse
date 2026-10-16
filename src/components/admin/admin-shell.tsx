@@ -49,7 +49,7 @@ export function AdminShell({ initialAuthenticated }: { initialAuthenticated: boo
         </span>
       </header>
 
-      <main className="px-4 pb-16 sm:px-8">
+      <main id="main-content" tabIndex={-1} className="px-4 pb-16 sm:px-8">
         {authenticated ? (
           <AdminDashboard onLogout={logout} />
         ) : (

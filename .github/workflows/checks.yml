@@ -36,4 +36,36 @@ jobs:
         run: npx tsx scripts/test-insights.ts
         env:
           INSIGHTS_TEST_DATABASE_URL: mongodb://127.0.0.1:27017/studio_insights_test?replicaSet=rs0
+      - name: Verify transactional content recovery with MongoDB
+        run: npm run test:recovery
+        env:
+          RECOVERY_TEST_DATABASE_URL: mongodb://127.0.0.1:27017/studio_recovery_test?replicaSet=rs0
+      - name: Seed synthetic browser-test content
+        run: npx tsx scripts/seed-e2e.ts
+        env:
+          E2E_DATABASE_URL: mongodb://127.0.0.1:27017/studio_e2e_test?replicaSet=rs0
+      - name: Create browser-test indexes
+        run: npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: mongodb://127.0.0.1:27017/studio_e2e_test?replicaSet=rs0
+      - name: Verify content check refuses an unavailable database
+        run: |
+          if DATABASE_URL='' npm run content:check; then
+            echo 'Content check unexpectedly accepted an unavailable database'
+            exit 1
+          fi
       - run: npm run build
+        env:
+          DATABASE_URL: mongodb://127.0.0.1:27017/studio_e2e_test?replicaSet=rs0
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          E2E_DATABASE_URL: mongodb://127.0.0.1:27017/studio_e2e_test?replicaSet=rs0
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

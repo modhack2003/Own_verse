@@ -1,7 +1,9 @@
 'use client';
 
+import { useCalmMotion } from '@/components/cyber/experience-gate';
+
 import { useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 import { ArrowUpRight, Award, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/cyber/primitives';
@@ -27,7 +29,7 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
 
 /** Segmented bar showing how many findings fall in each severity. */
 export function SeverityBar({ bySeverity, total }: { bySeverity: Record<Severity, number>; total: number }) {
-  const reduce = useReducedMotion();
+  const reduce = useCalmMotion();
   const present = SEVERITIES.filter((s) => bySeverity[s.id] > 0);
   if (!total) return null;
   return (

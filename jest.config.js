@@ -11,6 +11,7 @@ const customJestConfig = {
   testEnvironment: 'jsdom',
   // the standalone build copies package.json into .next/, which Jest's haste map reports as a name collision
   modulePathIgnorePatterns: ['<rootDir>/.next/'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },

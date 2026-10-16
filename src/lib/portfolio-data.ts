@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { sortRepos } from '@/lib/repo-order';
 import { computeBountyStats, toPublicFinding } from '@/lib/bounty';
 
-/** During `next build` the database may be unreachable — render empty and let ISR refresh it. */
+/** Identifies static generation for routes that intentionally have no content. */
 export const isBuildPhase = () => process.env.NEXT_PHASE === 'phase-production-build';
 
 /** Type of a value after JSON round-tripping (Dates become ISO strings). */
@@ -80,7 +80,7 @@ async function load() {
         where: { published: true },
         orderBy: { publishedAt: 'desc' },
         take: 3,
-        select: { id: true, title: true, slug: true, excerpt: true, content: true, tags: true, publishedAt: true },
+        select: { id: true, title: true, slug: true, excerpt: true, tags: true, publishedAt: true },
       }),
       prisma.blogPost.count({ where: { published: true } }),
       prisma.bountyFinding.findMany({ orderBy: [{ date: 'desc' }, { createdAt: 'desc' }] }),
@@ -110,28 +110,12 @@ async function load() {
 
 export type PortfolioData = Awaited<ReturnType<typeof load>>;
 
-const EMPTY: PortfolioData = {
-  personalData: null,
-  projects: [],
-  githubRepos: [],
-  skills: null,
-  certificates: [],
-  education: [],
-  ctfEvents: [],
-  experience: [],
-  posts: [],
-  postCount: 0,
-  bounty: { findings: [], stats: computeBountyStats([]) },
-};
-
 export async function getPortfolioData(): Promise<PortfolioData> {
   try {
     return await load();
   } catch (error) {
     console.error('Error fetching portfolio data:', error);
-    // At build time fall back to an empty page (ISR refreshes it after deploy).
-    // At runtime re-throw so Next keeps serving the last good version instead of caching an empty page.
-    if (isBuildPhase()) return EMPTY;
+    // Fail the build/revalidation rather than replacing a good deployment with empty content.
     throw error;
   }
 }

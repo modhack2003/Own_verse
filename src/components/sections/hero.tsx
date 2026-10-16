@@ -1,7 +1,9 @@
 'use client';
 
+import { useCalmMotion } from '@/components/cyber/experience-gate';
+
 import dynamic from 'next/dynamic';
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { GlitchText, Marquee, TickRuler } from '@/components/cyber/primitives';
 
@@ -64,7 +66,7 @@ export function HeroSection({ personalData }: { personalData: PersonalData | nul
   const fontSize = `min(${(152 / letters).toFixed(2)}vw, 15rem)`;
 
   const ref = useRef<HTMLElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useCalmMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const nameY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -120]);
   const nameSkew = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -6]);

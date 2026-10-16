@@ -100,6 +100,15 @@ function toEntries(projects: Project[], repos: GitHubRepository[]): Entry[] {
   return [...a, ...b];
 }
 
+function ProjectActions({ entry, onDetails }: { entry: Entry; onDetails: () => void }) {
+  const safe = (href?: string | null) => href && /^(https?:\/\/|\/(?!\/))/.test(href) ? href : undefined;
+  return <div className="flex flex-wrap gap-4 border-x border-b border-signal/25 bg-card px-6 py-4 monofont text-xs text-signal lg:hidden">
+    {safe(entry.primaryHref) && <a href={safe(entry.primaryHref)} target="_blank" rel="noopener noreferrer" aria-label={`${entry.kind === 'repo' ? 'Source' : 'Visit'}: ${entry.title}`}>{entry.kind === 'repo' ? 'Source' : 'Visit'}</a>}
+    {safe(entry.demoHref) && <a href={safe(entry.demoHref)} target="_blank" rel="noopener noreferrer" aria-label={`Demo: ${entry.title}`}>Demo</a>}
+    <a href="#project-preview" onClick={onDetails} aria-label={`Details: ${entry.title}`}>Details</a>
+  </div>;
+}
+
 // The per-language colour map lives with the classifier so the CSS dot and the 3D accent agree.
 const langColor = (lang?: string | null) => (lang && LANGUAGE_COLORS[lang]) || 'hsl(var(--cyan))';
 
@@ -254,7 +263,7 @@ export function ProjectsSection({ projects, githubRepos }: { projects: Project[]
   return (
     <section className="grid gap-10 lg:grid-cols-[340px_1fr]">
       {/* preview panel */}
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+      <aside id="project-preview" tabIndex={-1} className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start">
         <div className="clip-notch border border-signal/50 bg-card">
           <div className="flex items-center justify-between border-b border-signal/40 px-4 py-3 monofont text-[10px] uppercase tracking-[0.3em] text-signal">
             <span>{'// preview'}</span>
@@ -358,6 +367,9 @@ export function ProjectsSection({ projects, githubRepos }: { projects: Project[]
                   <button
                     type="button"
                     onClick={() => setActive(i)}
+                    onFocus={() => setActive(i)}
+                    aria-pressed={active === i}
+                    aria-controls="project-preview"
                     onMouseEnter={() => setActive(i)}
                     className={cn(
                       'bracket group relative flex h-full min-h-[240px] w-full flex-col overflow-hidden border bg-card p-6 text-left transition-colors duration-300',
@@ -405,6 +417,7 @@ export function ProjectsSection({ projects, githubRepos }: { projects: Project[]
                       />
                     )}
                   </button>
+                  <ProjectActions entry={e} onDetails={() => setActive(i)} />
                 </TiltCard>
               </Reveal>
             ))}
@@ -416,6 +429,9 @@ export function ProjectsSection({ projects, githubRepos }: { projects: Project[]
                 <button
                   type="button"
                   onClick={() => setActive(i)}
+                  onFocus={() => setActive(i)}
+                  aria-pressed={active === i}
+                  aria-controls="project-preview"
                   onMouseEnter={() => setActive(i)}
                   className={cn(
                     'group grid w-full grid-cols-[3rem_1fr_auto] items-center gap-4 border-b border-signal/40 px-2 py-5 text-left transition-colors',
@@ -434,6 +450,7 @@ export function ProjectsSection({ projects, githubRepos }: { projects: Project[]
                     {e.kind === 'repo' ? `★ ${e.stars}` : 'field'}
                   </span>
                 </button>
+                <ProjectActions entry={e} onDetails={() => setActive(i)} />
               </li>
             ))}
           </ul>

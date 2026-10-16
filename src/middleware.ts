@@ -55,26 +55,31 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthenticated = hasValidSession(request);
+  const headers = (response: NextResponse) => {
+    addSecurityHeaders(response);
+    if (!['/', '/blog', '/sitemap.xml', '/robots.txt'].includes(pathname) && !pathname.startsWith('/blog/')) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return response;
+  };
 
   if ((DECOY_PATHS as readonly string[]).includes(pathname)) {
-    const response = addSecurityHeaders(NextResponse.next());
+    const response = headers(NextResponse.next());
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
     return response;
   }
 
   // Allow public access portal (obfuscated)
   if (pathname === '/b1kr4m-5h4d0w') {
-    return addSecurityHeaders(NextResponse.next());
+    return headers(NextResponse.next());
   }
 
   // Allow direct access to bikram route (admin dashboard) - REAL ACCESS
   if (pathname === '/bikram') {
-    return addSecurityHeaders(NextResponse.next());
+    return headers(NextResponse.next());
   }
 
   // Allow access to admin route - DEAD END (always fails PIN)
   if (pathname === '/admin') {
-    return addSecurityHeaders(NextResponse.next());
+    return headers(NextResponse.next());
   }
 
   // Obfuscated paths support: decode last path segment via base64, hex, or rot13
@@ -88,26 +93,26 @@ export function middleware(request: NextRequest) {
 
     if (decoded === 'admin' || decoded === '/admin') {
       // Require session for direct admin, otherwise show portal
-      if (isAuthenticated) return addSecurityHeaders(NextResponse.rewrite(new URL('/admin', request.url)));
-      return addSecurityHeaders(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
+      if (isAuthenticated) return headers(NextResponse.rewrite(new URL('/admin', request.url)));
+      return headers(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
     }
     if (decoded === 'admin/access' || decoded === '/admin/access') {
-      return addSecurityHeaders(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
+      return headers(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
     }
     if (decoded === 'bikram' || decoded === '/bikram') {
       // Obfuscated bikram access
-      if (isAuthenticated) return addSecurityHeaders(NextResponse.rewrite(new URL('/bikram', request.url)));
-      return addSecurityHeaders(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
+      if (isAuthenticated) return headers(NextResponse.rewrite(new URL('/bikram', request.url)));
+      return headers(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
     }
   }
 
   // Additional obfuscated bikram paths (more secure)
   if (pathname === '/Ym1rcmFt' || pathname === '/62696b72616d' || pathname === '/ovxenz' || pathname === '/b1kr4m') {
-    if (isAuthenticated) return addSecurityHeaders(NextResponse.rewrite(new URL('/bikram', request.url)));
-    return addSecurityHeaders(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
+    if (isAuthenticated) return headers(NextResponse.rewrite(new URL('/bikram', request.url)));
+    return headers(NextResponse.rewrite(new URL('/b1kr4m-5h4d0w', request.url)));
   }
 
-  return addSecurityHeaders(NextResponse.next());
+  return headers(NextResponse.next());
 }
 
 export const config = {

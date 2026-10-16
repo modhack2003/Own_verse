@@ -1,3 +1,4 @@
+import { jsonLd, SITE_URL } from '@/lib/seo';
 import { HeroSection } from '@/components/sections/hero';
 import { AboutSection } from '@/components/sections/about';
 import { ExperienceSection } from '@/components/sections/experience';
@@ -54,7 +55,8 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <HeaderNav personalData={personalData} hidden={hidden} />
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({ '@context': 'https://schema.org', '@type': 'Person', name: personalData?.name ?? 'Bikram Dey', jobTitle: personalData?.title, url: SITE_URL, sameAs: [personalData?.github, personalData?.linkedin].filter(Boolean) }) }} />
         <HeroSection personalData={personalData} />
 
         <div className="relative">

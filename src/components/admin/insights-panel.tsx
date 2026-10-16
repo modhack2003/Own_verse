@@ -29,7 +29,7 @@ export function InsightsPanel({ onImported }: { onImported: () => void }) {
     } catch (e) { setError(errorMessage(e)); }
     finally { setBusy(false); }
   }
-  return <Panel title="Security Insights automation" description="Checks CISA’s Known Exploited Vulnerabilities catalog daily, around 10:30–11:30 AM IST. Publishes up to 3 briefs; the first run adds up to 8 from the past 30 days. Posts older than 90 days are archived and retained here." className="mb-5">
+  return <Panel title="Security Insights automation" description="Checks CISA’s Known Exploited Vulnerabilities catalog daily, around 10:30–11:30 AM IST. Publishes up to 3 briefs; the first run adds up to 8 from the past 30 days. Imported briefs older than 90 days are archived and retained here." className="mb-5">
     {!state ? <Btn variant="outline" onClick={() => void load()}>Reload automation settings</Btn> : <>
       <div className="flex flex-wrap items-center gap-5">
         <div className="flex items-center gap-2"><Toggle label="Daily Security Insights collection" checked={state.enabled} disabled={busy} onChange={v => void settings({ enabled: v })} /><span className="text-xs">Daily collection</span></div>

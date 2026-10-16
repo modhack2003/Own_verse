@@ -348,3 +348,12 @@ html.safe-mode .animate-scan {
   }
   .glitch-layer { display: none; }
 }
+
+/* Safe before a visitor chooses effects, including first paint and reduced motion. */
+html.safe-mode .animate-blink,
+html.safe-mode .animate-marquee,
+html.safe-mode .animate-marquee-rev { animation: none !important; }
+html.safe-mode { scroll-behavior: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .animate-flicker, .animate-blink, .animate-scan { animation: none !important; }
+}

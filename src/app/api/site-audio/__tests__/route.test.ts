@@ -21,10 +21,10 @@ test('public read returns defaults before the first admin save; writes require a
 });
 test('admin saves a durable singleton; a separate public read receives the saved settings only', async () => {
   const config = { ...DEFAULT_AUDIO_SETTINGS, music: 0.3, intervalSeconds: 35, enabledDialogueIds: [] };
-  jest.mocked(prisma.siteAudioConfig.upsert).mockResolvedValue({ id: 'site-audio', ...config });
+  jest.mocked(prisma.siteAudioConfig.upsert).mockResolvedValue({ id: 'site-audio', deletedAt: null, ...config });
   expect((await PUT(req(config))).status).toBe(200);
   expect(prisma.siteAudioConfig.upsert).toHaveBeenCalledWith({ where: { id: 'site-audio' }, update: config, create: { id: 'site-audio', ...config } });
-  jest.mocked(prisma.siteAudioConfig.findUnique).mockResolvedValue({ id: 'site-audio', ...config });
+  jest.mocked(prisma.siteAudioConfig.findUnique).mockResolvedValue({ id: 'site-audio', deletedAt: null, ...config });
   expect(await (await GET()).json()).toEqual(config);
 });
 test.each([{ music: 2 }, { intervalSeconds: 0 }, { fadeSeconds: -1 }, { enabledDialogueIds: ['external'] }, { enabledDialogueIds: ['pain', 'pain'] }, { src: 'https://example.com/file.mp3' }])('rejects malformed settings %o', async patch => {

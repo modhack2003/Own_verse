@@ -1,24 +1,19 @@
+import { cache } from 'react';
+import { jsonLd, publicMetadata, SITE_URL } from '@/lib/seo';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderNav } from '@/components/header-nav';
 import { Markdown } from '@/lib/markdown';
 import { prisma } from '@/lib/prisma';
-import { getHiddenSections, isBuildPhase, readTime } from '@/lib/portfolio-data';
+import { getHiddenSections, readTime } from '@/lib/portfolio-data';
 
 export const revalidate = 60;
 export const dynamicParams = true;
 
 type Props = { params: Promise<{ slug: string }> };
 
-async function getPost(slug: string) {
-  try {
-    return await prisma.blogPost.findFirst({ where: { slug, published: true } });
-  } catch (error) {
-    if (isBuildPhase()) return null;
-    throw error;
-  }
-}
+const getPost = cache((slug: string) => prisma.blogPost.findFirst({ where: { slug, published: true } }));
 
 export async function generateStaticParams() {
   return [];
@@ -27,8 +22,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const post = await getPost(slug);
-  if (!post) return { title: 'Not found' };
-  return { title: `${post.title} | Blog`, description: post.excerpt || undefined };
+  if (!post) return { title: 'Not found', robots: { index: false, follow: false } };
+  const metadata = publicMetadata(`${post.title} | Bikram Dey`, post.excerpt, `/blog/${encodeURIComponent(post.slug)}`);
+  return { ...metadata, openGraph: { ...metadata.openGraph, type: 'article', publishedTime: post.publishedAt?.toISOString(), modifiedTime: post.updatedAt.toISOString(), authors: ['Bikram Dey'], tags: post.tags } };
 }
 
 export default async function BlogPostPage({ params }: Props) {
@@ -43,7 +39,8 @@ export default async function BlogPostPage({ params }: Props) {
   return (
     <div className="flex min-h-screen flex-col">
       <HeaderNav personalData={personal} hidden={hidden} solid />
-      <main className="relative flex-1">
+      <main id="main-content" tabIndex={-1} className="relative flex-1">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({ '@context': 'https://schema.org', '@type': 'BlogPosting', headline: post.title, description: post.excerpt, datePublished: post.publishedAt?.toISOString(), dateModified: post.updatedAt.toISOString(), author: { '@type': 'Person', name: 'Bikram Dey', url: SITE_URL }, mainEntityOfPage: `${SITE_URL}/blog/${encodeURIComponent(post.slug)}`, image: `${SITE_URL}/social-preview.jpg` }) }} />
         <div aria-hidden className="grid-cross pointer-events-none absolute inset-0 opacity-40" />
         <article className="relative mx-auto max-w-3xl px-6 pb-28 pt-36 sm:px-10">
           <Link href="/blog" className="inline-flex items-center gap-2 monofont text-[11px] uppercase tracking-[0.25em] text-signal hover:text-bone">

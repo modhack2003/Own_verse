@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'motion/react';
+import * as Dialog from '@radix-ui/react-dialog';
 
 export type ExperienceMode = 'safe' | 'glitch';
 const STORAGE_KEY = 'nd-experience-mode';
@@ -10,134 +10,80 @@ export const EXPERIENCE_EVENT = 'nd:experience-mode';
 
 export function getExperienceMode(): ExperienceMode | null {
   if (typeof window === 'undefined') return null;
-  const v = window.localStorage.getItem(STORAGE_KEY);
-  return v === 'safe' || v === 'glitch' ? v : null;
+  try {
+    const value = window.localStorage.getItem(STORAGE_KEY);
+    return value === 'safe' || value === 'glitch' ? value : null;
+  } catch { return null; }
+}
+
+function subscribeMotion(listener: () => void) {
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+  window.addEventListener(EXPERIENCE_EVENT, listener);
+  media.addEventListener('change', listener);
+  return () => { window.removeEventListener(EXPERIENCE_EVENT, listener); media.removeEventListener('change', listener); };
+}
+/** Safe on the server and before consent, and reactive to OS preference changes. */
+export function useCalmMotion() {
+  return useSyncExternalStore(subscribeMotion, () => window.matchMedia('(prefers-reduced-motion: reduce)').matches || getExperienceMode() !== 'glitch', () => true);
 }
 
 function applyMode(mode: ExperienceMode) {
-  document.documentElement.classList.toggle('safe-mode', mode === 'safe');
-  window.dispatchEvent(new CustomEvent(EXPERIENCE_EVENT, { detail: mode }));
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const effective = reduced ? 'safe' : mode;
+  document.documentElement.classList.toggle('safe-mode', effective === 'safe');
+  window.dispatchEvent(new CustomEvent(EXPERIENCE_EVENT, { detail: effective }));
 }
 
-const SIDE_LETTERS = ['[LOADING]', 'S', 'E', 'C', '[LOADING]', 'U', 'R', 'VERSION', '[LOADING]'];
-
-/**
- * First-visit boot screen + photosensitivity warning (utopiatokyo.com style).
- * The choice is stored locally; "safe mode" disables glitch/flicker effects
- * and calms the 3D scene.
- */
+/** Static before consent; Radix traps focus, hides background content and restores focus. */
 export function ExperienceGate() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [booting, setBooting] = useState(true);
-
+  const [reduced, setReduced] = useState(false);
   useEffect(() => {
-    const stored = getExperienceMode();
-    if (stored) {
-      applyMode(stored);
-      return;
-    }
-    if (pathname !== '/') return;
-    setOpen(true);
-    const t = setTimeout(() => setBooting(false), 900);
-    return () => clearTimeout(t);
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => {
+      setReduced(media.matches);
+      applyMode(getExperienceMode() ?? 'safe');
+    };
+    sync();
+    media.addEventListener('change', sync);
+    setOpen(pathname === '/' && !getExperienceMode());
+    return () => media.removeEventListener('change', sync);
   }, [pathname]);
 
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
-
   const choose = (mode: ExperienceMode) => {
-    window.localStorage.setItem(STORAGE_KEY, mode);
+    try { window.localStorage.setItem(STORAGE_KEY, mode); } catch { /* Private browsing still works. */ }
     applyMode(mode);
     setOpen(false);
+    // There is no trigger button: move focus to the document's main content.
+    requestAnimationFrame(() => {
+      const main = document.querySelector('main');
+      main?.setAttribute('tabindex', '-1');
+      main?.focus({ preventScroll: true });
+    });
   };
 
-  return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          key="gate"
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-ink"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: 'blur(8px)' }}
-          transition={{ duration: 0.6 }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="gate-title"
-        >
-          {/* side boot columns */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 flex justify-between px-[8vw] py-10 monofont text-sm text-signal/40">
-            {[0, 1].map((col) => (
-              <div key={col} className="flex flex-col justify-between">
-                {SIDE_LETTERS.map((l, i) => (
-                  <span key={i} className="animate-flicker" style={{ animationDelay: `${(i + col) * 0.23}s` }}>
-                    {l}
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            {booting ? (
-              <motion.div
-                key="boot"
-                className="relative monofont text-xs uppercase tracking-[0.4em] text-signal"
-                exit={{ opacity: 0 }}
-              >
-                Establishing uplink<span className="animate-blink">_</span>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="modal"
-                initial={{ opacity: 0, scale: 0.92, rotateX: 25 }}
-                animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                transition={{ type: 'spring', stiffness: 160, damping: 18 }}
-                className="relative mx-4 w-full max-w-xl bg-signal px-8 py-12 text-center text-ink sm:px-14 sm:py-16"
-                style={{ transformPerspective: 1000 }}
-              >
-                <h2
-                  id="gate-title"
-                  className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight sm:text-6xl"
-                >
-                  Experience
-                  <br />
-                  Warning
-                </h2>
-                <p className="mx-auto mt-8 max-w-sm text-sm font-medium leading-relaxed">
-                  This site features high-contrast visual effects, 3D motion and rapid transitions that may
-                  trigger seizures in people with photosensitive epilepsy.
-                </p>
-                <p className="mx-auto mt-4 max-w-sm text-sm font-medium leading-relaxed">
-                  If you or someone you know has a history of photosensitive seizures, please select Safe Mode.
-                </p>
-                <div className="mt-12 flex flex-col items-center justify-center gap-6 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => choose('safe')}
-                    className="bracket whitespace-nowrap bg-ink/15 px-6 py-3 monofont text-xs uppercase tracking-widest text-ink transition-colors hover:bg-ink hover:text-signal"
-                  >
-                    [ Use safe mode ]
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => choose('glitch')}
-                    className="bracket whitespace-nowrap bg-ink/15 px-6 py-3 monofont text-xs uppercase tracking-widest text-ink transition-colors hover:bg-ink hover:text-signal"
-                  >
-                    [ Enable glitch effect ]
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+  return <Dialog.Root open={open} onOpenChange={value => { if (!value) choose('safe'); }}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 z-[200] bg-ink" />
+      <Dialog.Content
+        className="fixed left-1/2 top-1/2 z-[201] max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-signal bg-ink px-6 py-10 text-center text-bone sm:px-12"
+        onCloseAutoFocus={event => event.preventDefault()}
+        onPointerDownOutside={event => event.preventDefault()}
+        onInteractOutside={event => event.preventDefault()}
+        aria-describedby="experience-description"
+      >
+        <Dialog.Title className="font-display text-4xl font-bold uppercase text-signal sm:text-5xl">Choose your experience</Dialog.Title>
+        <Dialog.Description id="experience-description" className="mt-6 text-sm leading-relaxed text-muted-foreground">
+          This site includes high-contrast effects and 3D motion. Safe mode keeps browsing calm. Glitch effects may trigger photosensitive seizures.
+          {reduced && ' Your reduced-motion preference is active; safe mode will remain enabled.'}
+        </Dialog.Description>
+        <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
+          <button type="button" onClick={() => choose('safe')} className="bracket bg-signal px-5 py-3 monofont text-xs uppercase tracking-widest text-ink">Use safe mode</button>
+          <button type="button" disabled={reduced} onClick={() => choose('glitch')} className="bracket border border-signal px-5 py-3 monofont text-xs uppercase tracking-widest text-signal disabled:opacity-40">Enable glitch effect</button>
+        </div>
+        <p className="mt-5 text-xs text-muted-foreground">Escape selects safe mode.</p>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>;
 }
