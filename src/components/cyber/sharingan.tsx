@@ -229,7 +229,7 @@ export function SharinganEye({ className }: { className?: string }) {
     }
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let mode: ExperienceMode = getExperienceMode() ?? 'glitch';
+    let mode: ExperienceMode = getExperienceMode() ?? 'safe';
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.setClearColor(0x000000, 0);

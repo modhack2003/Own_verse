@@ -7,7 +7,7 @@ export interface BlogPostSummary {
   title: string;
   slug: string;
   excerpt: string;
-  content: string;
+  content?: string;
   tags: string[];
   publishedAt: string | null;
 }
@@ -44,7 +44,7 @@ export function BlogCard({ post, index }: { post: BlogPostSummary; index: number
           ))}
         </div>
         <div className="mt-5 flex items-center justify-between border-t border-signal/30 pt-4 monofont text-[11px] uppercase tracking-[0.2em] group-hover:border-ink/40">
-          <span>{readTime(post.content)}</span>
+          <span>{post.content ? readTime(post.content) : 'Read article'}</span>
           <span className="flex items-center gap-1">
             Read More <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </span>

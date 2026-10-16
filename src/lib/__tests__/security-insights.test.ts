@@ -87,11 +87,12 @@ test('old posts are archived reversibly and recent imported drafts migrate only 
   const { client, db, state } = database();
   state.publishingMigratedAt = null as never;
   db.blogPost.updateMany.mockResolvedValueOnce({ count: 2 }).mockResolvedValueOnce({ count: 4 });
-  db.insightImport.findMany.mockResolvedValueOnce([{ postSlug: 'security-insight-cve-2026-10001' }] as never);
+  db.insightImport.findMany.mockResolvedValue([{ postSlug: 'security-insight-cve-2026-10001' }] as never);
   db.insightImport.count.mockResolvedValue(3);
   const result = await syncInsights(client);
   expect(result).toMatchObject({ created: 0, published: 4, archived: 2 });
   const archive = db.blogPost.updateMany.mock.calls[0][0];
+  expect(archive.where.slug.in).toEqual(['security-insight-cve-2026-10001']);
   expect(archive.data).toEqual({ published: false, archivedAt: now });
   expect(archive.where.AND[1].OR[0].publishedAt.lt).toEqual(new Date('2026-07-10T07:00:00Z'));
   expect(db.blogPost.updateMany.mock.calls[1][0].where.slug.in).toEqual(['security-insight-cve-2026-10001']);

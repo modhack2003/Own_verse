@@ -7,7 +7,7 @@ Uses the official CISA KEV JSON mirror. No AI key, paid scheduler, or publishing
 - First successful run publishes up to eight briefs from the preceding 30 days, distributed across weeks. Existing manual CVE coverage is skipped.
 - Subsequent runs publish at most three new briefs per UTC day. Past-month imports also publish automatically. The publishing approval switch has been removed.
 - On the first successful sync after this update, existing unpublished imported briefs from the past 90 days publish automatically. Archived posts and manual drafts are excluded. Later syncs preserve editorial changes, including deliberate unpublishing.
-- Every successful sync archives blog posts older than 90 days using their publication date, or creation date for drafts without a publication date. Archived content is retained in the database and admin blog list, marked with `archivedAt`, and hidden from the homepage, `/blog`, and individual public post URLs. Nothing is permanently deleted.
+- Every successful sync archives imported briefs older than 90 days using their publication date, or creation date for drafts without a publication date. Archived content is retained in the database and admin blog list, marked with `archivedAt`, and hidden from the homepage, `/blog`, and individual public post URLs. Nothing is permanently deleted.
 - Admin → Blog: daily collection switch, Sync now, Import past month, last success and errors. The manual editor still controls manually authored posts.
 - A shared ten-minute MongoDB lease prevents concurrent cron/admin imports. Automatic retries have a twenty-minute cooldown. The endpoint runs for at most five minutes. Paused collection also pauses automatic archiving; Sync now can still run it.
 - Stable slugs and a durable CVE ledger prevent duplicates, preserve edits, and keep deleted imported posts from returning.
@@ -23,3 +23,5 @@ Daily collection and publishing are enabled by default. Existing pause settings 
 ## Verification
 
 Unit tests cover source validation, date windows, budgets, automatic publishing, deletion tracking, lease skips, failures, admin authentication and cron authentication. CI runs `scripts/test-insights.ts` against a disposable MongoDB replica set to verify atomic concurrency, persisted caps, automatic backfill publishing, legacy documents with missing fields, one-time draft release, retained archived content, deletion tracking and editorial preservation. It cannot connect to production.
+
+Retention applies only to slugs recorded in InsightImport. Original write-ups are never selected by the 90-day automatic archive.

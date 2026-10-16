@@ -46,3 +46,7 @@ firestore-debug.log
 /src/generated/prisma
 
 !.env.example
+
+# Browser test output
+/playwright-report/
+/test-results/

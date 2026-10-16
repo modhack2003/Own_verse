@@ -53,7 +53,7 @@ interface StageApi {
 
 function safeMode(): ExperienceMode {
   try {
-    return getExperienceMode() ?? 'glitch';
+    return getExperienceMode() ?? 'safe';
   } catch {
     return 'glitch';
   }

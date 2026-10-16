@@ -91,8 +91,12 @@ export async function syncInsights(db: PrismaClient, options: { automatic?: bool
   try {
     const cutoff = new Date(now.getTime() - BLOG_RETENTION_DAYS * DAY);
     const unarchived = { OR: [{ archivedAt: null }, { archivedAt: { isSet: false } }] };
+    // Only ledger-backed imports belong to retention. A manual write-up may
+    // mention the same CVE, so never infer ownership from its title or tags.
+    const retainedImports = await db.insightImport.findMany({ select: { postSlug: true } });
     // Reversible archive: retain the content, dates and durable import ledger.
     archived = (await db.blogPost.updateMany({ where: {
+      slug: { in: retainedImports.map(i => i.postSlug) },
       AND: [unarchived, { OR: [
         { publishedAt: { lt: cutoff, not: null } },
         { AND: [{ OR: [{ publishedAt: null }, { publishedAt: { isSet: false } }] }, { createdAt: { lt: cutoff } }] },

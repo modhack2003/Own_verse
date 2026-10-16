@@ -12,7 +12,7 @@ async function main() {
     'Refusing to run outside the dedicated local studio_throttle_test database.');
   process.env.DATABASE_URL = uri;
   process.env.ADMIN_PIN = '835194';
-  const { prisma } = await import('../src/lib/prisma');
+  const { prisma, rawPrisma } = await import('../src/lib/prisma');
   const { checkAdminPin } = await import('../src/lib/admin-auth');
   const { throttleTransaction } = await import('../src/lib/throttle-transaction');
   const { POST: engagement } = await import('../src/app/api/engagements/route');
@@ -22,15 +22,15 @@ async function main() {
   const { NextRequest } = await import('next/server');
 
   const clear = async () => {
-    await prisma.loginAttempt.deleteMany();
-    await prisma.contactMessage.deleteMany();
-    await prisma.engagement.deleteMany();
-    await prisma.gitHubSyncState.deleteMany();
-    await prisma.gitHubRepository.deleteMany();
-    await prisma.experience.deleteMany();
-    await prisma.skill.deleteMany();
-    await prisma.adminCredential.deleteMany();
-    await prisma.throttleGuard.deleteMany();
+    await rawPrisma.loginAttempt.deleteMany();
+    await rawPrisma.contactMessage.deleteMany();
+    await rawPrisma.engagement.deleteMany();
+    await rawPrisma.gitHubSyncState.deleteMany();
+    await rawPrisma.gitHubRepository.deleteMany();
+    await rawPrisma.experience.deleteMany();
+    await rawPrisma.skill.deleteMany();
+    await rawPrisma.adminCredential.deleteMany();
+    await rawPrisma.throttleGuard.deleteMany();
   };
   const failures = async (count: number, sameIp: boolean) => {
     await prisma.loginAttempt.createMany({ data: Array.from({ length: count }, (_, i) => ({

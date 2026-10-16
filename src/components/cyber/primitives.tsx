@@ -1,12 +1,13 @@
 'use client';
 
+import { useCalmMotion } from '@/components/cyber/experience-gate';
+
 import { useEffect, useRef, useState, type ElementType, type ReactNode } from 'react';
 import {
   motion,
   useInView,
   useMotionTemplate,
   useMotionValue,
-  useReducedMotion,
   useSpring,
   useTransform,
 } from 'motion/react';
@@ -30,7 +31,7 @@ export function Reveal({
   rotateX?: number;
   as?: 'div' | 'li' | 'article' | 'section';
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useCalmMotion();
   const Comp = motion[as];
   return (
     <Comp
@@ -81,7 +82,7 @@ export function ScrambleText({
 }) {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
-  const reduce = useReducedMotion();
+  const reduce = useCalmMotion();
   const [out, setOut] = useState(text);
 
   useEffect(() => {
@@ -176,7 +177,7 @@ export function TiltCard({
   glare?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useCalmMotion();
   const px = useMotionValue(0.5);
   const py = useMotionValue(0.5);
   const rx = useSpring(useTransform(py, [0, 1], [max, -max]), { stiffness: 180, damping: 18 });

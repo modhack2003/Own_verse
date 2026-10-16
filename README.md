@@ -268,9 +268,12 @@ The admin console, first login and day‑to‑day content workflow are covered i
 
 1. Import the repo in Vercel. The Next.js preset is picked up automatically.
 2. Add the variables above under **Settings → Environment Variables**.
-3. Deploy. `postinstall` generates the Prisma client during the build.
-4. Once, from your machine, run `DATABASE_URL="<production uri>" npm run db:push` to create the collections and indexes.
-5. Log in, set a new PIN in **Security**, then press **GitHub → Sync now**.
+3. From your machine, run `DATABASE_URL="<production uri>" npm run db:push` to create the collections and indexes, including content history.
+4. For a new database, use the local admin console (`npm run dev`) to save your real profile (name, title and bio) and at least one project or visible repository. Existing populated installations can skip this step. Do not seed example content into production.
+5. Deploy. `postinstall` generates Prisma; `prebuild` verifies the content/database before a release. A failed check keeps the previous successful deployment active.
+6. Log in, set a new PIN in **Security**, then press **GitHub → Sync now**.
+
+See [availability, admin recovery and browser tests](docs/portfolio-improvements.md) for Trash, revisions, backup limits and test commands.
 
 > [!TIP]
 > Seeing `Server selection timeout` or `bad auth`? In Atlas, open **Network Access** to Vercel (for example `0.0.0.0/0`), and check that the database name is part of `DATABASE_URL`.

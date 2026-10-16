@@ -11,6 +11,7 @@ generator client {
 // were created before it existed keep loading.
 
 model PersonalData {
+  deletedAt DateTime?
   id        String  @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   title     String
@@ -26,6 +27,7 @@ model PersonalData {
 }
 
 model Project {
+  deletedAt DateTime?
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String
@@ -34,6 +36,7 @@ model Project {
 }
 
 model Skill {
+  deletedAt DateTime?
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   languages String[]
   tools     String[]
@@ -41,6 +44,7 @@ model Skill {
 }
 
 model Certificate {
+  deletedAt DateTime?
   id     String  @id @default(auto()) @map("_id") @db.ObjectId
   name   String
   issuer String
@@ -49,6 +53,7 @@ model Certificate {
 }
 
 model Education {
+  deletedAt DateTime?
   id          String @id @default(auto()) @map("_id") @db.ObjectId
   institution String
   degree      String
@@ -56,6 +61,7 @@ model Education {
 }
 
 model Experience {
+  deletedAt DateTime?
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   company     String
   role        String
@@ -69,6 +75,7 @@ model Experience {
 }
 
 model CtfEvent {
+  deletedAt DateTime?
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String
   organizer  String
@@ -81,6 +88,7 @@ model CtfEvent {
 }
 
 model GitHubRepository {
+  deletedAt DateTime?
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   githubId        Int      @unique // GitHub repository ID
   name            String
@@ -119,6 +127,7 @@ model GitHubRepository {
 }
 
 model BlogPost {
+  deletedAt DateTime?
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   slug        String    @unique
@@ -135,6 +144,7 @@ model BlogPost {
 /// A reported vulnerability shown in the public Hall of Fame.
 /// When privateProgram is true the program name and link never leave the server.
 model BountyFinding {
+  deletedAt DateTime?
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   title          String
   program        String
@@ -275,6 +285,7 @@ model InsightImport {
 
 /// Shared site-wide playback settings; public visitors can only mute their theme.
 model SiteAudioConfig {
+  deletedAt DateTime?
   id                 String @id @map("_id")
   music              Float @default(0.75)
   dialogue           Float @default(1)
@@ -283,4 +294,20 @@ model SiteAudioConfig {
   intervalSeconds    Int @default(20)
   fadeSeconds        Float @default(4)
   enabledDialogueIds String[]
+}
+
+/// Append-only content revisions, including reversible trash operations.
+model ContentRevision {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  model     String
+  recordId  String
+  action    String
+  actor     String
+  label     String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  @@index([model, recordId, createdAt])
+  @@index([createdAt])
 }

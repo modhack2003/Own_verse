@@ -13,7 +13,11 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
-    "github:sync": "tsx scripts/sync-github.ts"
+    "github:sync": "tsx scripts/sync-github.ts",
+    "content:check": "tsx scripts/check-content.ts",
+    "prebuild": "npm run content:check",
+    "test:e2e": "playwright test",
+    "test:recovery": "tsx scripts/test-recovery.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -63,6 +67,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^30.0.0",

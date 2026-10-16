@@ -1,5 +1,7 @@
 'use client';
 
+import { HistoryPanel } from './history-panel';
+
 import { useEffect, useState, type ComponentType } from 'react';
 import {
   Award,
@@ -187,7 +189,8 @@ type TabId =
   | 'inbox'
   | 'import'
   | 'security'
-  | 'audio';
+  | 'audio'
+  | 'history';
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -201,6 +204,7 @@ const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string
   { id: 'skills', label: 'Skills', icon: Wrench },
   { id: 'blog', label: 'Blog', icon: FileText },
   { id: 'audio', label: 'Site audio', icon: Volume2 },
+  { id: 'history', label: 'History & recovery', icon: FileText },
   { id: 'requests', label: 'Requests', icon: Handshake },
   { id: 'inbox', label: 'Inbox', icon: Inbox },
   { id: 'import', label: 'LinkedIn import', icon: Upload },
@@ -322,6 +326,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === 'import' && <ImportPanel />}
           {tab === 'security' && <SecurityPanel onLogout={onLogout} />}
           {tab === 'audio' && <AudioPanel />}
+          {tab === 'history' && <HistoryPanel />}
           {tab === 'blog' && <InsightsPanel onImported={() => setBlogVersion(v => v + 1)} />}
           {tab in COLLECTIONS && <CollectionEditor key={`${tab}-${blogVersion}`} {...COLLECTIONS[tab]} />}
         </div>

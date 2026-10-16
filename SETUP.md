@@ -46,3 +46,7 @@ npm test            # unit tests
 npm run typecheck
 npm run lint
 ```
+
+## Content availability and recovery
+
+Builds now require a reachable, populated database to avoid releasing an empty portfolio. See [portfolio improvements](docs/portfolio-improvements.md) for the content check, schema/index setup, admin Trash/history, backup limits, and browser tests.

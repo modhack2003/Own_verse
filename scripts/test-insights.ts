@@ -29,6 +29,8 @@ async function main() {
     _id: { $oid: '000000000000000000000001' }, title: 'Old post', slug: 'old-post', excerpt: '', content: 'Retain me', tags: [],
     published: true, publishedAt: { $date: oldDate.toISOString() }, createdAt: { $date: oldDate.toISOString() }, updatedAt: { $date: oldDate.toISOString() },
   }] });
+  await db.blogPost.create({ data: { title: 'Old imported brief', slug: 'old-import', excerpt: '', content: 'Retain imported content', tags: [], published: true, publishedAt: oldDate } });
+  await db.insightImport.create({ data: { id: 'CVE-2026-99999', postSlug: 'old-import', sourceDate: oldDate } });
   const recent = await db.blogPost.findFirstOrThrow({ where: { published: true } });
   await db.blogPost.update({ where: { id: recent.id }, data: { published: false, publishedAt: null } });
   await db.insightSyncState.update({ where: { id: 'security-insights' }, data: { publishingMigratedAt: null, autoPublish: false } });
@@ -36,8 +38,11 @@ async function main() {
   assert.equal(migration.archived, 1);
   assert.equal(migration.published, 1);
   const old = await db.blogPost.findUniqueOrThrow({ where: { slug: 'old-post' } });
-  assert.equal(old.published, false);
-  assert.ok(old.archivedAt);
+  assert.equal(old.published, true, 'manual write-ups must survive retention');
+  assert.equal(old.archivedAt, null);
+  const archived = await db.blogPost.findUniqueOrThrow({ where: { slug: 'old-import' } });
+  assert.equal(archived.published, false);
+  assert.ok(archived.archivedAt);
   assert.equal(old.content, 'Retain me');
   assert.equal(await db.insightImport.count({ where: { postSlug: edited.slug } }), 1);
   await db.blogPost.update({ where: { id: recent.id }, data: { published: false } });
