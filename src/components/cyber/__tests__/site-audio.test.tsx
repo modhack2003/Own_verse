@@ -55,3 +55,14 @@ test('visitor volume overrides are ignored; only theme mute persists', async () 
   expect(mockSettings).toHaveBeenLastCalledWith(settings);
   expect(screen.getByRole('button', { name: 'Unmute theme music' })).toBeVisible();
 });
+
+test('theme startup does not wait for a slow settings response', async () => {
+  let finish!: (r: Response) => void;
+  jest.mocked(global.fetch).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  render(<SiteAudio />);
+  expect(mockEnable).toHaveBeenCalledTimes(1);
+  expect(mockSettings).not.toHaveBeenCalled();
+  await act(async () => finish({ ok: true, json: async () => ({ ...DEFAULT_AUDIO_SETTINGS, music: 0.5 }) } as Response));
+  expect(mockSettings).toHaveBeenCalledWith(expect.objectContaining({ music: 0.5 }));
+  expect(mockEnable).toHaveBeenCalledTimes(1);
+});

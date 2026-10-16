@@ -26,13 +26,19 @@ as original-cast masters; the owner accepted the candidates for this project.
 - The public page has one icon button: mute/unmute theme music only. It never
   stops dialogue or Sharingan effects. The visitor's theme mute preference is
   saved separately; old per-browser volume settings are ignored.
+- The theme is preloaded from the document head. The mixer starts immediately
+  on mount, in parallel with the settings API; a slow settings response cannot
+  hold up the theme. Saved admin settings are applied when the response arrives.
 - Automatic startup attempts to play the theme on load. Browser autoplay policy
   may suspend it until the first pointer or key interaction. That interaction
   unlocks the same mixer; it never creates duplicate theme sources.
 - The theme starts at zero gain and ramps to its configured level over 4 seconds,
   then holds there. Default theme is 75%, dialogue 100%, and eye effects 95%.
-- The theme loops continuously beneath voices and effects. A master compressor
-  reduces peaks when loud channels mix; individual sources remain independent.
+- The theme loops continuously beneath voices and effects. During a quote it
+  fades to 20% of its configured level over 150 ms, then restores over 800 ms
+  when the quote ends or is canceled. The loop never stops or restarts. Theme
+  mute takes priority, including when a quote ends. A master compressor reduces
+  combined peaks; dialogue and effects keep their own channel levels.
 - The first dialogue starts after 20 seconds of active playback. Every later
   dialogue waits 20 seconds after the previous recording ENDS, irrespective of
   clip length. Settings refreshes do not restart an unchanged countdown.
@@ -47,7 +53,10 @@ as original-cast masters; the owner accepted the candidates for this project.
 The authenticated dashboard has a **Site audio** section with all three channel
 levels, dialogue gap (1–600 seconds), theme fade (0–30 seconds), automatic
 character dialogue, and individual clip enable switches and preview players.
-Defaults can be restored in the form, then saved explicitly.
+Defaults can be restored in the form, then saved explicitly. Numeric fields
+retain string drafts while typing, so zero can be deleted and replaced. Empty
+required values and out-of-range values are rejected before a save request;
+only validated numbers are sent to the API.
 
 `GET /api/site-audio` returns public, non-sensitive settings; before the first
 save it returns the defaults. `PUT /api/site-audio` requires the existing admin
@@ -62,7 +71,8 @@ the admin form reports the error and never pretends an unsuccessful save worked.
 ## Validation
 
 Run TypeScript, ESLint, Jest, and the production build. Tests cover theme-only
-mute, fade targets, short and long dialogue completion plus the full gap,
+mute, duck/restore/cancel behavior, slow-settings startup, editable numeric
+drafts, fade targets, short and long dialogue completion plus the full gap,
 blocked-autoplay unlock without duplicate music, admin-only writes, persistence
 contracts, invalid settings, playlist assets, and public/admin UI separation.
 Browser checks should exercise the fade, theme-only mute with active dialogue

@@ -5,14 +5,21 @@ import { AUDIO_SETTINGS_EVENT, DEFAULT_AUDIO_SETTINGS, DIALOGUES, parseAudioSett
 import { api, errorMessage } from './api-client';
 import { Btn, Field, Panel, TextInput, Toggle } from './ui';
 
+type AudioDraft = Omit<AudioSettings, 'intervalSeconds' | 'fadeSeconds'> & {
+  intervalSeconds: string; fadeSeconds: string;
+};
+const toDraft = (settings: AudioSettings): AudioDraft => ({
+  ...settings, intervalSeconds: String(settings.intervalSeconds), fadeSeconds: String(settings.fadeSeconds),
+});
+
 export function AudioPanel() {
-  const [settings, setSettings] = useState<AudioSettings | null>(null);
+  const [settings, setSettings] = useState<AudioDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const load = async () => {
     setBusy(true);
-    try { setSettings(parseAudioSettings(await api('/api/site-audio'))); setError(null); }
+    try { setSettings(toDraft(parseAudioSettings(await api('/api/site-audio')))); setError(null); }
     catch (e) { setError(errorMessage(e)); }
     finally { setBusy(false); }
   };
@@ -21,7 +28,16 @@ export function AudioPanel() {
     if (!settings) return;
     setBusy(true); setNotice(null);
     try {
-      setSettings(parseAudioSettings(await api('/api/site-audio', { method: 'PUT', body: settings })));
+      if (!settings.intervalSeconds.trim()) throw new Error('Enter the gap after each dialogue.');
+      if (!settings.fadeSeconds.trim()) throw new Error('Enter the theme fade duration.');
+      const intervalSeconds = Number(settings.intervalSeconds);
+      const fadeSeconds = Number(settings.fadeSeconds);
+      if (!Number.isInteger(intervalSeconds) || intervalSeconds < 1 || intervalSeconds > 600)
+        throw new Error('Dialogue gap must be a whole number from 1 to 600 seconds.');
+      if (!Number.isFinite(fadeSeconds) || fadeSeconds < 0 || fadeSeconds > 30)
+        throw new Error('Theme fade duration must be from 0 to 30 seconds.');
+      const body: AudioSettings = { ...settings, intervalSeconds, fadeSeconds };
+      setSettings(toDraft(parseAudioSettings(await api('/api/site-audio', { method: 'PUT', body }))));
       window.dispatchEvent(new Event(AUDIO_SETTINGS_EVENT));
       setNotice('Audio settings saved for all visitors. Open pages refresh within one minute.'); setError(null);
     } catch (e) { setError(errorMessage(e)); }
@@ -42,12 +58,12 @@ export function AudioPanel() {
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <Field label="Gap after each dialogue (seconds)" htmlFor="audio-gap" hint="Measured from the end of a recording, regardless of its length.">
-            <TextInput id="audio-gap" type="number" min="1" max="600" step="1" value={settings.intervalSeconds}
-              onChange={e => setSettings({ ...settings, intervalSeconds: Number(e.target.value) })} />
+            <TextInput id="audio-gap" type="number" required min="1" max="600" step="1" value={settings.intervalSeconds}
+              onChange={e => setSettings({ ...settings, intervalSeconds: e.target.value })} />
           </Field>
           <Field label="Theme fade-in (seconds)" htmlFor="audio-fade" hint="Starts silent and rises to the theme volume, then stays there.">
-            <TextInput id="audio-fade" type="number" min="0" max="30" step="0.5" value={settings.fadeSeconds}
-              onChange={e => setSettings({ ...settings, fadeSeconds: Number(e.target.value) })} />
+            <TextInput id="audio-fade" type="number" required min="0" max="30" step="0.5" value={settings.fadeSeconds}
+              onChange={e => setSettings({ ...settings, fadeSeconds: e.target.value })} />
           </Field>
         </div>
         <div className="flex items-center gap-3"><Toggle label="Automatic character dialogue" checked={settings.randomDialogue}
@@ -71,10 +87,10 @@ export function AudioPanel() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Btn onClick={() => void save()}>Save audio settings</Btn>
-          <Btn variant="outline" onClick={() => { setSettings({ ...DEFAULT_AUDIO_SETTINGS, enabledDialogueIds: [...DEFAULT_AUDIO_SETTINGS.enabledDialogueIds] }); setNotice('Defaults restored in this form. Save to apply.'); }}>Restore defaults</Btn>
+          <Btn variant="outline" onClick={() => { setSettings(toDraft({ ...DEFAULT_AUDIO_SETTINGS, enabledDialogueIds: [...DEFAULT_AUDIO_SETTINGS.enabledDialogueIds] })); setNotice('Defaults restored in this form. Save to apply.'); }}>Restore defaults</Btn>
         </div>
       </fieldset>
-      <p className="mt-5 text-xs text-muted-foreground">Theme loops throughout browsing beneath the voices. Browsers may require the first tap or keypress before audio starts. Muting the public theme button leaves dialogue and effects active.</p>
+      <p className="mt-5 text-xs text-muted-foreground">Theme lowers to 20% of its configured volume while a quote plays, then returns smoothly. Browsers may require the first tap or keypress before audio starts. Muting the public theme button leaves dialogue and effects active.</p>
     </>}
   </Panel>;
 }

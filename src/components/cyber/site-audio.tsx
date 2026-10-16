@@ -31,7 +31,10 @@ export function SiteAudio() {
         if (!controller.signal.aborted) mixer.setSettings(settings);
       } catch { /* Defaults keep audio working if settings cannot load. */ }
     };
-    void load().then(() => { if (!controller.signal.aborted) void mixer.enable(); });
+    // Never put the settings API (including its cold-start timeout) on the
+    // audio startup path. Apply shared settings as soon as they arrive.
+    void mixer.enable();
+    void load();
     const refresh = setInterval(() => { if (!document.hidden) void load(); }, 60_000);
     const onSettings = () => { void load(); };
     const onGesture = () => mixer.unlock();
