@@ -1,0 +1,50 @@
+[
+  {
+    "file": "lib/parse.js",
+    "originalHash": "e572166565f15fa6ad9865ae49d678218e32aabfd1b3720f6d0d43d39800d310",
+    "patchedHash": "8426ab11bc847a1ce51e6a7836b168446f3cd2f2c92fd4d1585310b6da9ce3d8",
+    "replacements": [
+      [
+        "    if (value === CHAR_LEFT_PARENTHESES) {",
+        "    if (value === CHAR_LEFT_PARENTHESES) {\n      if (stack.length >= 100) throw new SyntaxError('Brace pattern exceeds safe nesting');"
+      ],
+      [
+        "    if (value === CHAR_LEFT_CURLY_BRACE) {",
+        "    if (value === CHAR_LEFT_CURLY_BRACE) {\n      if (stack.length >= 100) throw new SyntaxError('Brace pattern exceeds safe nesting');"
+      ]
+    ]
+  },
+  {
+    "file": "lib/compile.js",
+    "originalHash": "dc98f22eee3d511785d92a00758d5f0d48efed5f5813bdecc2de430c529b5c9f",
+    "patchedHash": "9a4201d5fe031b59c1a39c84c842f64d509fa4b2f5864a2a80111cd6e9293a33",
+    "replacements": [
+      [
+        "const compile = (ast, options = {}) => {",
+        "const compile = (ast, options = {}) => {\n  require('./own-verse-depth-guard.cjs')(ast);"
+      ]
+    ]
+  },
+  {
+    "file": "lib/expand.js",
+    "originalHash": "41ccc196ebfa7b7781a634e721eb744e4e7bcb54cba427a7e3d6806a1b9e58f7",
+    "patchedHash": "a1106d176f409ca65dbab817926c32e2319a8bf5a34ceccb38e2b91f9cd2c2ba",
+    "replacements": [
+      [
+        "const expand = (ast, options = {}) => {",
+        "const expand = (ast, options = {}) => {\n  require('./own-verse-depth-guard.cjs')(ast);"
+      ]
+    ]
+  },
+  {
+    "file": "lib/stringify.js",
+    "originalHash": "379f22d77bfa1478341ccd49c5e4267464aabcbba03558bab332aac23fc6f23a",
+    "patchedHash": "70c6851dc2b9b9a1702ed21370bfa2125432a0ebfd99a26534b51fef5485193e",
+    "replacements": [
+      [
+        "module.exports = (ast, options = {}) => {",
+        "module.exports = (ast, options = {}) => {\n  require('./own-verse-depth-guard.cjs')(ast);"
+      ]
+    ]
+  }
+]
