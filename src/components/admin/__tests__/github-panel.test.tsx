@@ -37,7 +37,7 @@ test('a zero repository pin position can be cleared and saved as automatic order
   expect(position).toHaveValue(0);
   fireEvent.change(position, { target: { value: '' } });
   expect(position).toHaveValue(null);
-  fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
   await waitFor(() => expect(api).toHaveBeenCalledWith('/api/github/repos/1', {
     method: 'PUT', body: { customTitle: '', customDescription: '', customTags: [], displayOrder: null },
   }));

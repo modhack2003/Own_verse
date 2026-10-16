@@ -22,7 +22,7 @@ test('collection number fields allow deleting zero and send numbers only at save
     expect(input).toHaveValue(Number(value));
   }
   fireEvent.change(screen.getByLabelText('points'), { target: { value: '' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
   await waitFor(() => expect(api).toHaveBeenCalledWith('/api/test-numbers/1', {
     method: 'PUT', body: { bounty: 100, points: null, year: 2026 },
   }));
